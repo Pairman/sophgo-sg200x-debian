@@ -50,8 +50,8 @@ jobs:
           ls -lah image-files-*/
       - name: publish artifacts
         uses: softprops/action-gh-release@v2
-        token: ${{ secrets.GH_TOKEN_RELEASES }}
         with:
+          token: ${{ secrets.GH_TOKEN_RELEASES }}
           append_body: true
           files: |
             image-files-*/*
