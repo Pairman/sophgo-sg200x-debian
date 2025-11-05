@@ -35,7 +35,7 @@ class MemoryMap:
     # =========================
     # Ignore the area of FreeRTOS in u-boot and kernel
     KERNEL_MEMORY_ADDR = DRAM_BASE
-    KERNEL_MEMORY_SIZE = DRAM_SIZE
+    KERNEL_MEMORY_SIZE = DRAM_SIZE - FREERTOS_SIZE
 
     # =================
     # Multimedia buffer. Used by u-boot/kernel/FreeRTOS
@@ -58,7 +58,7 @@ class MemoryMap:
 
     # Boot logo is after the ION buffer
     # Framebuffer uses boot logo's reserved memory
-    BOOTLOGO_SIZE = 0 * SIZE_1K
+    BOOTLOGO_SIZE = 5632 * SIZE_1K
     BOOTLOGO_ADDR = ION_ADDR - BOOTLOGO_SIZE
     FRAMEBUFFER_SIZE = BOOTLOGO_SIZE
     FRAMEBUFFER_ADDR = BOOTLOGO_ADDR
