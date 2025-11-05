@@ -19,7 +19,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ghcr.io/scpcom/sophgo-sg200x-debian:debian
-          options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/  -v ./scripts/:/builder
+          options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/  -v ${{ github.workspace }}/scripts/:/builder
           run: |
             make BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} image
             chmod 777 /output/
