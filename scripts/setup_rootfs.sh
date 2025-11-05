@@ -158,7 +158,7 @@ gpg --dearmor /tmp/install/public-key.asc
 cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/scpcom-packages.gpg
 
 cat > /etc/apt/sources.list <<EOF
-deb http://deb.debian.org/debian trixie main non-free-firmware
+deb http://deb.debian.org/debian sid main contrib non-free non-free-firmware
 EOF
 
 mkdir -p /etc/apt/sources.list.d
@@ -168,12 +168,20 @@ deb https://scpcom.github.io/deb stable sg200x ${BOARD}-${VARIANT}
 EOG
 
 cat >> /etc/systemd/journald.conf <<EOJ
-RuntimeMaxUse=16M
+RuntimeMaxUse=2M
 RuntimeMaxFileSize=2M
 EOJ
 
+
+#
+# Let NetworkManager manage wlan0
+#
+sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf
+
+
 apt-get update
 apt-get install -y chrony
+apt-get install -y htop fastfetch tmux
 
 
 #
