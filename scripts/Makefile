@@ -8,6 +8,7 @@ blue:=$(shell tput setaf 4)
 reset:=$(shell tput sgr0)
 
 GIT_REF ?= develop
+GH_PROXY ?=
 
 BUILDDIR := /build
 
@@ -246,7 +247,7 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 $(BUILDDIR)/linux-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out Kernel for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) https://github.com/scpcom/linux.git $(BUILDDIR)/kernel
+	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) https://$(GH_PROXY)github.com/scpcom/linux.git $(BUILDDIR)/kernel
 	@cd $(BUILDDIR)/kernel && git checkout 7972753
 	@touch $@
 
@@ -318,7 +319,7 @@ linux-clean:
 $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) https://github.com/scpcom/sophgo-osdrv.git $(BUILDDIR)/osdrv
+	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) https://$(GH_PROXY)github.com/scpcom/sophgo-osdrv.git $(BUILDDIR)/osdrv
 	@cd $(BUILDDIR)/osdrv && git checkout 3c4d256
 	@touch $@
 
@@ -383,7 +384,7 @@ osdrv-clean:
 $(BUILDDIR)/middleware-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out Middleware for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b maix_mmf-cvisdk $(GIT_CLONE_OPTS) --recursive https://github.com/scpcom/sophgo-middleware.git $(BUILDDIR)/middleware
+	@git clone -b maix_mmf-cvisdk $(GIT_CLONE_OPTS) --recursive https://$(GH_PROXY)github.com/scpcom/sophgo-middleware.git $(BUILDDIR)/middleware
 	@cd $(BUILDDIR)/middleware && git checkout df0d5c3
 	@touch $@
 
@@ -439,10 +440,10 @@ middleware-clean:
 $(BUILDDIR)/buildroot-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b nanokvm-2025.02 $(GIT_CLONE_OPTS) --recursive https://github.com/scpcom/buildroot.git $(BUILDDIR)/buildroot
+	@git clone -b nanokvm-2025.02 $(GIT_CLONE_OPTS) --recursive https://$(GH_PROXY)github.com/scpcom/buildroot.git $(BUILDDIR)/buildroot
 	@cd $(BR_DIR) && git checkout f3c4da5
 	@mkdir -p $(BUILDDIR)/ramdisk/tools
-	@git clone -b main https://github.com/scpcom/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
+	@git clone -b main https://$(GH_PROXY)github.com/scpcom/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
 	@touch $@
 
 $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
@@ -507,7 +508,7 @@ buildroot-clean:
 $(BUILDDIR)/uboot-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out U-Boot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) https://github.com/scpcom/u-boot $(BUILDDIR)/u-boot
+	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) https://$(GH_PROXY)github.com/scpcom/u-boot $(BUILDDIR)/u-boot
 	@cd $(BUILDDIR)/u-boot && git checkout 47219ba
 	@touch $@
 
@@ -578,9 +579,9 @@ uboot-clean:
 $(BUILDDIR)/opensbi-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OpenSBI for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-cvisdk-1.2 $(GIT_CLONE_OPTS) https://github.com/scpcom/opensbi $(BUILDDIR)/opensbi
+	@git clone -b licheervnano-cvisdk-1.2 $(GIT_CLONE_OPTS) https://$(GH_PROXY)github.com/scpcom/opensbi $(BUILDDIR)/opensbi
 	@cd $(BUILDDIR)/opensbi && git checkout 3491ae4
-#	git clone https://github.com/riscv-software-src/opensbi.git $(BUILDDIR)/opensbi
+#	git clone https://$(GH_PROXY)github.com/riscv-software-src/opensbi.git $(BUILDDIR)/opensbi
 #	@cd $(BUILDDIR)/opensbi && git checkout a2b255b
 	@touch $@
 
@@ -613,7 +614,7 @@ opensbi-clean:
 $(BUILDDIR)/fsbl-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out FSBL for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) https://github.com/scpcom/sophgo-fsbl $(BUILDDIR)/fsbl
+	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) https://$(GH_PROXY)github.com/scpcom/sophgo-fsbl $(BUILDDIR)/fsbl
 	@cd $(BUILDDIR)/fsbl && git checkout 1e73867
 	@touch $@
 
@@ -693,7 +694,7 @@ $(BUILDDIR)/image-prepare-stamp:
 	@-rm $(addon-targets)
 	@mkdir -p /rootfs/
 	@curl -v -L https://scpcom.github.io/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" trixie "/rootfs/" "deb http://deb.debian.org/debian/ trixie main" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://scpcom.github.io/deb stable sg200x $(BOARD)-$(VARIANT)"
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" sid "/rootfs/" "deb http://deb.debian.org/debian/ sid main" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://scpcom.github.io/deb stable sg200x $(BOARD)-$(VARIANT)"
 	@touch $@
 
 $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) $(BUILDDIR)/linux-package-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
