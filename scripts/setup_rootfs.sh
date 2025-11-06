@@ -126,6 +126,8 @@ if grep -q '^U_BOOT_FDT_DIR' /etc/default/u-boot ; then
 else
   echo "U_BOOT_FDT_DIR=\"/usr/lib/linux-image-\"" >> /etc/default/u-boot
 fi
+# Add LSM boot params
+sed -i -E 's/lsm=[^" ]*/lsm=lockdown,yama,bpf,apparmor/' /etc/default/u-boot
 u-boot-update
 if [ "$STORAGETYPE" = "sd" ]; then
   sed -i -e 's|fdtdir /usr/lib/|fdtdir /fdt/|' /boot/extlinux/extlinux.conf
