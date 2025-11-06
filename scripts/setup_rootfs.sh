@@ -60,6 +60,11 @@ EOF
 fi
 
 
+# Fix /usr/lib/sysctl.d/50-pid-max.conf invalid argument 
+cat > /etc/sysctl.d/90-override-pid-max.conf <<EOF
+kernel.pid_max = 32768
+EOF
+
 
 #regenerate SSH keys on first boot
 cat > /etc/systemd/system/finalize-image.service <<EOF
