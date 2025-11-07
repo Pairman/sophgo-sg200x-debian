@@ -8,7 +8,7 @@ ifneq ("$(findstring kvm,$(VARIANT))","")
 BOARD_EXT=$(BOARD)-$(VARIANT)
 ION_SIZE=35
 else
-ION_SIZE=63
+ION_SIZE=0
 endif
 PANEL_TUNING_DEFAULT?=MIPI_panel_zct2133v1
 PANEL_TUNING_EXTRA?=MIPI_panel_lt9611_1024x768_60hz MIPI_panel_lt9611_1280x720_60hz MIPI_panel_mtd700920b MIPI_panel_d240si31 MIPI_panel_st7701_hd228001c31 MIPI_panel_st7701_hd228001c31_alt0 MIPI_panel_st7701_d300fpc9307a MIPI_panel_st7701_d310t9362v1 MIPI_panel_st7701_dxq5d0019b480854 MIPI_panel_st7701_dxq5d0019_v0
