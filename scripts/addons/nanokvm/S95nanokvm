@@ -13,7 +13,7 @@ case "$1" in
         str_value=$(awk '{print $2}' /sys/class/cvi-base/base_uid)
         first_uint=$(echo "$str_value" | cut -d'_' -f1)
         second_uint=$(echo "$str_value" | cut -d'_' -f2)
-        echo "$first_uint$second_uint" > /device_key
+        echo "$first_uint$second_uint" > /etc/machine-id-cvi
     fi
 
     # Set iptables rules (skip if already present)

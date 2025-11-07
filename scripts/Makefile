@@ -129,14 +129,12 @@ CROSS_COMPILE_SDK=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
 KO_DIRS = drivers/i2c \
-drivers/input/touchscreen \
 drivers/media/usb/gspca \
 drivers/net/usb \
 drivers/net/wireless \
 drivers/pwm \
 drivers/rtc \
 drivers/spi \
-drivers/video/backlight \
 fs/efivarfs \
 net/ipv4 \
 net/wireless
@@ -693,8 +691,8 @@ $(BUILDDIR)/image-prepare-stamp:
 	@rm -rf /rootfs/
 	@-rm $(addon-targets)
 	@mkdir -p /rootfs/
-	@curl -v -L https://scpcom.github.io/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" sid "/rootfs/" "deb http://deb.debian.org/debian/ sid main" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://scpcom.github.io/deb stable sg200x $(BOARD)-$(VARIANT)"
+	@curl -v -L https://sg200x.deb.git.pnxlr.eu.org/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" sid "/rootfs/" "deb http://deb.debian.org/debian/ sid main" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://sg200x.deb.git.pnxlr.eu.org/deb stable sg200x $(BOARD)-$(VARIANT)"
 	@touch $@
 
 $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) $(BUILDDIR)/linux-package-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
