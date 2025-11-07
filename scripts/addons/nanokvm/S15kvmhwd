@@ -45,8 +45,8 @@ init_alpha_hw(){
   echo out > /sys/class/gpio/gpio${Alpha_PWR_KEY_Pin}/direction    # pwr key
   echo out > /sys/class/gpio/gpio${Alpha_RST_KEY_Pin}/direction    # rst key
 
-  rmmod /mnt/system/ko/i2c-gpio.ko
-  rmmod /mnt/system/ko/i2c-algo-bit.ko
+  rmmod /usr/lib/vendor/system/ko/i2c-gpio.ko
+  rmmod /usr/lib/vendor/system/ko/i2c-algo-bit.ko
 
   # rm /etc/init.d/S25wifimod
   # rm /etc/init.d/S30wifi
@@ -88,10 +88,10 @@ init_beta_pcie_hw(){
 
   echo 1 > /sys/class/gpio/gpio${PCIe_HDMI_RST_Pin}/value    # rst key
 
-  rmmod /mnt/system/ko/i2c-gpio.ko
-  rmmod /mnt/system/ko/i2c-algo-bit.ko
-  insmod /mnt/system/ko/i2c-algo-bit.ko
-  insmod /mnt/system/ko/i2c-gpio.ko
+  rmmod /usr/lib/vendor/system/ko/i2c-gpio.ko
+  rmmod /usr/lib/vendor/system/ko/i2c-algo-bit.ko
+  insmod /usr/lib/vendor/system/ko/i2c-algo-bit.ko
+  insmod /usr/lib/vendor/system/ko/i2c-gpio.ko
 }
 
 kvm_hw_detect(){
@@ -141,10 +141,10 @@ kvm_hw_detect(){
       echo out > /sys/class/gpio/gpio${Beta_OLED_RST_Pin}/direction
       echo 1 > /sys/class/gpio/gpio${Beta_OLED_RST_Pin}/value
 
-      rmmod /mnt/system/ko/i2c-gpio.ko
-      rmmod /mnt/system/ko/i2c-algo-bit.ko
-      insmod /mnt/system/ko/i2c-algo-bit.ko
-      insmod /mnt/system/ko/i2c-gpio.ko
+      rmmod /usr/lib/vendor/system/ko/i2c-gpio.ko
+      rmmod /usr/lib/vendor/system/ko/i2c-algo-bit.ko
+      insmod /usr/lib/vendor/system/ko/i2c-algo-bit.ko
+      insmod /usr/lib/vendor/system/ko/i2c-gpio.ko
 
       kvm_tmp=$(i2cdetect -r -y 4 0x2c 0x2c | grep 2c)
       if [ -n "$kvm_tmp" ]
@@ -182,8 +182,8 @@ kvm_hw_detect(){
 
 kvm_hw_init(){
     FIND_FILE="/etc/kvm/hw"
-    rmmod /mnt/system/ko/soph_mipi_rx.ko
-    insmod /mnt/system/ko/soph_mipi_rx.ko lt_int=1
+    rmmod /usr/lib/vendor/system/ko/soph_mipi_rx.ko
+    insmod /usr/lib/vendor/system/ko/soph_mipi_rx.ko lt_int=1
     if [ `grep -c "alpha" $FIND_FILE` -ne '0' ]
     then
         echo "hw = alpha!"

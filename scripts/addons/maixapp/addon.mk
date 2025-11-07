@@ -38,7 +38,6 @@ $(BUILDDIR)/maixapp-stamp: $(BUILDDIR)/buildroot-package-stamp
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build ffmpeg-maixapp-$(BOARD)-$(MAIXAPPVERSION) ffmpeg-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/ffmpeg-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/
-	@cp /output/ffmpeg-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb /rootfs/tmp/install/
 	@$(eval MAIXAPP_LIBJPEG_PACKAGE_DIR=$(shell echo "$(BUILDDIR)/package/libjpeg-maixapp-$(BOARD)-$(MAIXAPPVERSION)"))
 	@mkdir -p $(MAIXAPP_LIBJPEG_PACKAGE_DIR)
 	@cp -r /builder/deb/maixapp-sg200x/* $(MAIXAPP_LIBJPEG_PACKAGE_DIR)/
@@ -50,7 +49,6 @@ $(BUILDDIR)/maixapp-stamp: $(BUILDDIR)/buildroot-package-stamp
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build libjpeg-maixapp-$(BOARD)-$(MAIXAPPVERSION) libjpeg-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/libjpeg-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/
-	@cp /output/libjpeg-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb /rootfs/tmp/install/
 	@$(eval MAIXAPP_OPENCV_PACKAGE_DIR=$(shell echo "$(BUILDDIR)/package/opencv-maixapp-$(BOARD)-$(MAIXAPPVERSION)"))
 	@mkdir -p $(MAIXAPP_OPENCV_PACKAGE_DIR)
 	@cp -r /builder/deb/maixapp-sg200x/* $(MAIXAPP_OPENCV_PACKAGE_DIR)/
@@ -62,7 +60,6 @@ $(BUILDDIR)/maixapp-stamp: $(BUILDDIR)/buildroot-package-stamp
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build opencv-maixapp-$(BOARD)-$(MAIXAPPVERSION) opencv-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/opencv-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/
-	@cp /output/opencv-maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb /rootfs/tmp/install/
 	@$(eval MAIXAPP_PACKAGE_DIR=$(shell echo "$(BUILDDIR)/package/maixapp-$(BOARD)-$(MAIXAPPVERSION)"))
 	@mkdir -p $(MAIXAPP_PACKAGE_DIR)
 	@cp -r /builder/deb/maixapp-sg200x/* $(MAIXAPP_PACKAGE_DIR)/
@@ -78,5 +75,4 @@ $(BUILDDIR)/maixapp-stamp: $(BUILDDIR)/buildroot-package-stamp
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build maixapp-$(BOARD)-$(MAIXAPPVERSION) maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/
-	@cp /output/maixapp-$(BOARD)_$(MAIXAPPVERSION)$(BV)_$(DEB_ARCH).deb /rootfs/tmp/install/
 	@touch $@

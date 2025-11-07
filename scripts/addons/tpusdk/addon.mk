@@ -78,7 +78,7 @@ $(BUILDDIR)/tpusdk-prepare-configure-stamp: $(BUILDDIR)/tpusdk-prepare-patch-sta
 $(BUILDDIR)/tpusdk-compile-stamp: $(BUILDDIR)/tpusdk-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building TPU SDK for $(BOARD)$(END_COLOUR)"
 	@cd $(BUILDDIR)/tpusdk && ./build-sdk.sh --board=$(TPUSDK_BOARD_LINK) --sdkver=$(TPUSDK_VER)
-	@cd $(BUILDDIR)/tpusdk && ln -s soc_$(TPUSDK_BOARD_LINK)/rootfs/mnt/system install/system
+	@cd $(BUILDDIR)/tpusdk && ln -s soc_$(TPUSDK_BOARD_LINK)/rootfs/usr/lib/vendor/system install/system
 	@find $(BUILDDIR)/tpusdk/install/system -name "*.so*" -type f ! -path "*libtinyalsa.so" ! -path "*libaac*.so" ! -path "*libcvi_audio.so" ! -path "*libcvi_*ssp*.so" ! -path "*libcvi_*vqe*.so" ! -path "*libcvi_RES1.so" ! -path "*libcvi_VoiceEngine.so" ! -path "*libae.so" ! -path "*libaf.so" ! -path "*libawb.so" ! -path "*libisp_algo.so" -printf 'striping %p\n' -exec $(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)strip --strip-all {} \;
 	@find $(BUILDDIR)/tpusdk/install/system -executable -type f ! -name "*.sh" ! -path "*etc*" ! -path "*.ko" ! -path "*.so*" -printf 'striping %p\n' -exec $(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)strip --strip-all {} 2>/dev/null \;
 	@touch $@
@@ -90,17 +90,16 @@ $(BUILDDIR)/tpusdk-package-stamp: $(BUILDDIR)/tpusdk-compile-stamp
 	@$(eval TPUSDK_PACKAGE_DIR=$(shell echo "$(BUILDDIR)/package/cvitek-tpusdk-$(BOARD)-$(TPUSDKVERSION)"))
 	@mkdir -p $(TPUSDK_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-tpusdk/* $(TPUSDK_PACKAGE_DIR)/
-	@mkdir -pv $(TPUSDK_PACKAGE_DIR)/mnt/system/lib/
-	@rsync -avpPxH $(BUILDDIR)/tpusdk/install/system/lib/ $(TPUSDK_PACKAGE_DIR)/mnt/system/lib/
-	@mkdir -pv $(TPUSDK_PACKAGE_DIR)/mnt/system/usr/bin/ai/
-	@rsync -avpPxH $(BUILDDIR)/tpusdk/install/system/usr/bin/ai/ $(TPUSDK_PACKAGE_DIR)/mnt/system/usr/bin/ai/
+	@mkdir -pv $(TPUSDK_PACKAGE_DIR)/usr/lib/vendor/system/lib/
+	@rsync -avpPxH $(BUILDDIR)/tpusdk/install/system/lib/ $(TPUSDK_PACKAGE_DIR)/usr/lib/vendor/system/lib/
+	@mkdir -pv $(TPUSDK_PACKAGE_DIR)/usr/lib/vendor/system/usr/bin/ai/
+	@rsync -avpPxH $(BUILDDIR)/tpusdk/install/system/usr/bin/ai/ $(TPUSDK_PACKAGE_DIR)/usr/lib/vendor/system/usr/bin/ai/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(TPUSDK_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(TPUSDKVERSION)$(TV)/' $(TPUSDK_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: cvitek-tpusdk/Package: cvitek-tpusdk-$(BOARD)/' $(TPUSDK_PACKAGE_DIR)/DEBIAN/control
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build cvitek-tpusdk-$(BOARD)-$(TPUSDKVERSION) cvitek-tpusdk-$(BOARD)_$(TPUSDKVERSION)$(TV)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/cvitek-tpusdk-$(BOARD)_$(TPUSDKVERSION)$(TV)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/
-	@cp /output/cvitek-tpusdk-$(BOARD)_$(TPUSDKVERSION)$(TV)_$(DEB_ARCH).deb /rootfs/tmp/install/
 	@touch $@
 
 tpusdk: $(BUILDDIR)/tpusdk-package-stamp

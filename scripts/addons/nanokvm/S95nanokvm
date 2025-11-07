@@ -6,7 +6,7 @@ case "$1" in
     echo -n kvm > /boot/hostname.prefix
 
     # Copy sensor config if the file exists
-    [ -f /mnt/data/sensor_cfg.ini.LT ] && cp /mnt/data/sensor_cfg.ini.LT /mnt/data/sensor_cfg.ini
+    [ -f /usr/lib/vendor/data/sensor_cfg.ini.LT ] && cp /usr/lib/vendor/data/sensor_cfg.ini.LT /usr/lib/vendor/data/sensor_cfg.ini
 
     # Generate unique device key
     if [ -f /sys/class/cvi-base/base_uid ]; then
