@@ -3,7 +3,7 @@ Version: 1.0.0-1
 Architecture: riscv64
 Maintainer: @scpcom
 Installed-Size: 67
-Depends: cvi-pinmux-cv181x, firmware-vcodec-cv181x
+Depends: cvi-pinmux-cv181x
 Recommends: cvitek-osdrv-licheervnano-e
 Section: admin
 Priority: optional

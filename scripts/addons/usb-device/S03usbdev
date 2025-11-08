@@ -61,7 +61,7 @@ then
 		then
 			cat /boot/usb.serialnumber > strings/0x409/serialnumber
 		else
-			cat /device_key > strings/0x409/serialnumber
+			cat /etc/machine-id-cvi > strings/0x409/serialnumber
 		fi
 		if [ -e /boot/usb.manufacturer ]
 		then
