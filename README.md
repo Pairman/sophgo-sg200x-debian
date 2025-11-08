@@ -57,7 +57,7 @@ ethernet port in /etc/network/interfaces.d/end0
 
 ### Additional Packages
 This image also adds the debian repository for board-related packages so you can install additional repositories. The debian repository is hosted at 
-https://scpcom.github.io/deb which pulls down the compiled debian packages from the above github repository occasionally.
+https://sg200x.deb.git.pnxlr.eu.org/deb which pulls down the compiled debian packages from the above github repository occasionally.
 
 Available debian packages:
 
@@ -72,6 +72,8 @@ Available debian packages:
  Meta package, installs all board-specific packages.
  - cvitek-fsbl-licheervnano  
  The boot loader (including opensbi and u-boot).
+ - cvitek-osdrv-licheervnano-kvm  
+ Additional kernel drivers (required for camera support etc.).
  - device-key-licheervnano  
  Startup script that sets the Ethernet MAC address and hostname based on the hash off the device uuid.
  - gadget-nic-licheervnano  

@@ -23,12 +23,6 @@ IMAGE_ADDITIONS += "device-key"
 IMAGE_ADDITIONS += "ethernet-builtin"
 IMAGE_ADDITIONS += "load-systemko"
 IMAGE_ADDITIONS += "cvi-pinmux"
-ifneq ("$(findstring kvm,$(VARIANT))","")
-IMAGE_ADDITIONS += "nanokvm"
-else
-# IMAGE_ADDITIONS += "maixapp"
-# IMAGE_ADDITIONS += "tpusdk"
-endif
 IMAGE_ADDITIONS += "usb-device"
 IMAGE_ADDITIONS += "zram-config"
 IMAGE_ADDITIONS += "wifi-builtin"

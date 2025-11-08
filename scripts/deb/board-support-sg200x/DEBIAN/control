@@ -4,7 +4,7 @@ Architecture: riscv64
 Maintainer: @scpcom
 Installed-Size: 67
 Depends: cvi-pinmux-cv181x
-Recommends: cvitek-osdrv-licheervnano-e, firmware-vcodec-cv181x
+Recommends: cvitek-osdrv-licheervnano-e
 Section: admin
 Priority: optional
 Description: Board support for CVITEK cv181x chips
