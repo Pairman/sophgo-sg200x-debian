@@ -156,7 +156,7 @@ systemctl enable finalize-image.service
 
 # Update source list 
 
-rm -rf /etc/apt/sources.list.d/multistrap-debian.list
+rm -rf /etc/apt/{sources.list,sources.list.d/multistrap-debian.list}
 
 #apt-key add /tmp/install/public-key.asc
 gpg --dearmor /tmp/install/public-key.asc
