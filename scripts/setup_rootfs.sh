@@ -156,7 +156,8 @@ systemctl enable finalize-image.service
 
 # Update source list 
 
-rm -rf /etc/apt/{sources.list,sources.list.d/multistrap-debian.list}
+rm -rf /etc/apt/sources.list
+rm -rf /etc/apt/sources.list.d/multistrap-debian.list
 
 #apt-key add /tmp/install/public-key.asc
 gpg --dearmor /tmp/install/public-key.asc
@@ -198,10 +199,6 @@ sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf
 sed -i '/enable bash completion/{n; :a; /^#/!b; s/^# //; n; ba}' /etc/bash.bashrc
 
 
-ls /etc/apt
-cat /etc/apt/* | true
-ls /etc/apt/sources.list.d
-cat /etc/apt/sources.list.d/*
 apt-get update
 apt-get install -y chrony
 
