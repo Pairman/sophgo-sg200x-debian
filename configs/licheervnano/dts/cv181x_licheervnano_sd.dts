@@ -182,6 +182,14 @@
 &cvi_fb {
         status = "okay";
 };
+#else
+&fb_reserved {
+        status = "disabled";
+};
+
+&cvi_fb {
+        status = "disabled";
+};
 #endif
 
 &mipi_rx {
