@@ -198,8 +198,8 @@ sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf
 sed -i '/enable bash completion/{n; :a; /^#/!b; s/^# //; n; ba}' /etc/bash.bashrc
 
 
-apt-get update
-apt-get install -y chrony
+# apt-get update
+# apt-get install -y chrony
 
 
 #
