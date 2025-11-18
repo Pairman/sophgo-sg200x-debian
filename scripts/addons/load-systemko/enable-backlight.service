@@ -1,0 +1,16 @@
+[Unit]
+Description=Enable backlight
+After=load-systemko.service
+After=device-key.service
+After=usb-device.service
+Before=load-fb.service
+Before=ifup@end0.service
+Before=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=busybox sh /etc/init.d/S04backlight start
+
+[Install]
+WantedBy=multi-user.target

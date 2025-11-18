@@ -1,0 +1,6 @@
+#!/bin/sh
+cp -a /kvmapp/system/init.d/S03usbdev /etc/init.d/
+cp -a /kvmapp/system/init.d/S30wifi /etc/init.d/
+cp -a /kvmapp/system/systemd/usb-device*.service /etc/systemd/system/
+cp -a /kvmapp/system/systemd/wifi-builtin*.service /etc/systemd/system/
+cp -a /kvmapp/system/systemd/wifi-hostapd*.service /etc/systemd/system/
