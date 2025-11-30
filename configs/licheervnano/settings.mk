@@ -8,7 +8,7 @@ ifneq ("$(findstring kvm,$(VARIANT))","")
 BOARD_EXT=$(BOARD)-$(VARIANT)
 ION_SIZE=35
 else
-ION_SIZE=63
+ION_SIZE=0
 endif
 PANEL_TUNING_DEFAULT?=
 PANEL_TUNING_EXTRA?=

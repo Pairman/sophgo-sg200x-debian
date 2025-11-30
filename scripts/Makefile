@@ -8,6 +8,7 @@ blue:=$(shell tput setaf 4)
 reset:=$(shell tput sgr0)
 
 GIT_REF ?= develop
+GH_PROXY ?=
 
 BUILDDIR := /build
 
@@ -222,18 +223,9 @@ define copy_ko_action
 endef
 
 $(BUILDDIR)/$(BOARD)-$(VARIANT)/memmap.py:
-	@$(eval ISP_MEM_BASE_SIZE=$(shell expr $(ION_SIZE) - 4))
 	@mkdir -p $(BUILDDIR)/$(BOARD)-$(VARIANT)
 	@cp -p /configs/$(BOARD_CFG)/memmap.py $@
 	@sed -i s/'ION_SIZE = .* . SIZE_1M'/'ION_SIZE = $(ION_SIZE) * SIZE_1M'/g $@
-	@if [ $(ISP_MEM_BASE_SIZE) -le 0 ]; then \
-		sed -i s/'H26X_BITSTREAM_SIZE = .* . SIZE_1M'/'H26X_BITSTREAM_SIZE = 0 * SIZE_1M'/g $@ ; \
-		sed -i s/'ISP_MEM_BASE_SIZE = .* . SIZE_1M'/'ISP_MEM_BASE_SIZE = 0 * SIZE_1M'/g $@ ; \
-		sed -i s/'BOOTLOGO_SIZE = .* . SIZE_1K'/'BOOTLOGO_SIZE = 0 * SIZE_1K'/g $@ ; \
-	elif [ $(ISP_MEM_BASE_SIZE) -le 20 ]; then \
-		sed -i s/'H26X_BITSTREAM_SIZE = .* . SIZE_1M'/'H26X_BITSTREAM_SIZE = 2 * SIZE_1M'/g $@ ; \
-		sed -i s/'ISP_MEM_BASE_SIZE = .* . SIZE_1M'/'ISP_MEM_BASE_SIZE = $(ISP_MEM_BASE_SIZE) * SIZE_1M'/g $@ ; \
-	fi
 
 $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h: $(BUILDDIR)/$(BOARD)-$(VARIANT)/memmap.py
 	@python3 /builder/python/mmap_conv.py --type h $(BUILDDIR)/$(BOARD)-$(VARIANT)/memmap.py $@
@@ -251,7 +243,7 @@ $(BUILDDIR)/linux-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out Kernel for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) https://github.com/scpcom/linux.git $(BUILDDIR)/kernel
-	@cd $(BUILDDIR)/kernel && git checkout 0998bf8
+	@cd $(BUILDDIR)/kernel && git checkout 7972753
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/linux-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
@@ -459,7 +451,7 @@ $(BUILDDIR)/uboot-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out U-Boot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) https://github.com/scpcom/u-boot $(BUILDDIR)/u-boot
-	@cd $(BUILDDIR)/u-boot && git checkout 429f6ae
+	@cd $(BUILDDIR)/u-boot && git checkout e4abe76
 	@touch $@
 
 $(BUILDDIR)/uboot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/uboot-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
