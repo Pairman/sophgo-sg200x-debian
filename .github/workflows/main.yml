@@ -1,15 +1,75 @@
-name: Build Image
+name: Build Docker Image
 on:
+  # push:
+  #   tags:
+  #     - '*'
+  #   branches:
+  #     - '*'
   workflow_dispatch:
   
-jobs:     
+jobs:
+  # build-docker-image:
+  #   runs-on: ubuntu-latest 
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #       - name: checkout
+  #         uses: actions/checkout@v4
+  #       - uses: dorny/paths-filter@v3
+  #         id: filter
+  #         with:
+  #           filters: |
+  #             src:
+  #             - 'scripts/**'
+  #             - '.github/**'
+  #       - name: Log into registry ghcr.io
+  #         if: (github.event_name != 'pull_request' && steps.filter.outputs.src == 'true') || startsWith(github.event.ref, 'refs/tags/v')
+  #         uses: docker/login-action@v3
+  #         with:
+  #           registry: ghcr.io
+  #           username: ${{ github.actor }}
+  #           password: ${{ secrets.GITHUB_TOKEN }}
+
+  #       - name: Extract Docker metadata
+  #         if: (github.event_name != 'pull_request' && steps.filter.outputs.src == 'true') || startsWith(github.event.ref, 'refs/tags/v')
+  #         id: meta
+  #         uses: docker/metadata-action@v5
+  #         with:
+  #           images: ghcr.io/scpcom/sophgo-sg200x-debian
+
+  #       - name: Build and push Docker image
+  #         if: (github.event_name != 'pull_request' && steps.filter.outputs.src == 'true') || startsWith(github.event.ref, 'refs/tags/v')
+  #         id: build-and-push
+  #         uses: docker/build-push-action@v5
+  #         with:
+  #           context: .
+  #           file: ./scripts/Dockerfile
+  #           push: ${{ github.event_name != 'pull_request' }}
+  #           tags: ${{ steps.meta.outputs.tags }}
+  #           labels: ${{ steps.meta.outputs.labels }}
+  #       - name: pause
+  #         if: (github.event_name != 'pull_request' && steps.filter.outputs.src == 'true') || startsWith(github.event.ref, 'refs/tags/v')
+  #         run: sleep 120
+          
   build-image:
     strategy:
       matrix:
         boards: [licheervnano]
         variant: [e]
         storage: [sd]
+      #   boards: [licheervnano, duo256, duos]
+      #   variant: [e]
+      #   storage: [sd]
+      #   include: 
+      #     - boards: licheervnano
+      #       variant: kvm
+      #       storage: sd
+      #     - boards: duos
+      #       variant: e
+      #       storage: emmc
     runs-on: ubuntu-latest
+    # needs: build-docker-image
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -19,7 +79,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ghcr.io/scpcom/sophgo-sg200x-debian:debian
-          options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/  -v ${{ github.workspace }}/scripts/:/builder
+          options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/ -v ${{ github.workspace }}/scripts/:/builder
           run: |
             make BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} image
             chmod 777 /output/
@@ -37,6 +97,7 @@ jobs:
           path: |
             ${{env.PACKAGE}}
   release:
+    # if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     needs: [build-image]
     permissions: write-all
