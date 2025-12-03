@@ -1,0 +1,39 @@
+#!/bin/sh
+
+if [ "$1" = "start" ]
+then
+	. /etc/profile
+	fb=none
+	option=
+	[ ! -e /boot/fb ] || fb=$(cat /boot/fb)
+	if echo $fb | grep -q ' '
+	then
+		option=$(echo $fb | cut -d ' ' -f 2-)
+		fb=$(echo $fb | cut -d ' ' -f 1)
+	fi
+	for f in  /usr/lib/vendor/system/ko/fb_*.ko
+	do
+		b=$(basename $f | sed s/'\.ko$'/''/g)
+		[ $b = fb_${fb} ] || rmmod $b
+	done
+	if [ -e /usr/lib/vendor/system/ko/fb_${fb}.ko ]
+	then
+		echo "framebuffer enable"
+		[ X$option = X ] || rmmod fb_${fb}
+		insmod /usr/lib/vendor/system/ko/fb_${fb}.ko $option
+	elif [ -e /boot/fb ]
+	then
+		echo "framebuffer enable"
+		insmod /usr/lib/vendor/system/ko/soph_fb.ko
+		# we need keep node /dev/fb0 open
+		# graphic layer will disable after node /dev/fb0 is closed
+		(
+		exec 3<>/dev/fb0
+		while true
+		do
+			sleep 65535
+		done
+		) &
+	fi
+	exit 0
+fi

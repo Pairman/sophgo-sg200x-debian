@@ -1,0 +1,7 @@
+Package: nanokvm-sg200x
+Architecture: riscv64
+Maintainer: @scpcom
+Depends: busybox-static, exfatprogs, i2c-tools, iptables, libc6 (>= 2.34), libgomp1, parted, picocom, psmisc
+Priority: optional
+Version: 1.0.0
+Description: NanoKVM for the CV18xx and SG200X series of RISC-V SoC's
