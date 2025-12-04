@@ -11,20 +11,20 @@ then
 		option=$(echo $fb | cut -d ' ' -f 2-)
 		fb=$(echo $fb | cut -d ' ' -f 1)
 	fi
-	for f in  /usr/lib/vendor/system/ko/fb_*.ko
+	for f in  /mnt/system/ko/fb_*.ko
 	do
 		b=$(basename $f | sed s/'\.ko$'/''/g)
 		[ $b = fb_${fb} ] || rmmod $b
 	done
-	if [ -e /usr/lib/vendor/system/ko/fb_${fb}.ko ]
+	if [ -e /mnt/system/ko/fb_${fb}.ko ]
 	then
 		echo "framebuffer enable"
 		[ X$option = X ] || rmmod fb_${fb}
-		insmod /usr/lib/vendor/system/ko/fb_${fb}.ko $option
+		insmod /mnt/system/ko/fb_${fb}.ko $option
 	elif [ -e /boot/fb ]
 	then
 		echo "framebuffer enable"
-		insmod /usr/lib/vendor/system/ko/soph_fb.ko
+		insmod /mnt/system/ko/soph_fb.ko
 		# we need keep node /dev/fb0 open
 		# graphic layer will disable after node /dev/fb0 is closed
 		(

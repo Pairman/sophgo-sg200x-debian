@@ -6,13 +6,13 @@ then
 	printf "copy sensor config file: "
 	if [ -e /boot/alpha ]
 	then
-		if [ ! -e /usr/lib/vendor/data/sensor_cfg.ini ]
+		if [ ! -e /mnt/data/sensor_cfg.ini ]
 		then
-			cp /usr/lib/vendor/data/sensor_cfg.ini.alpha /usr/lib/vendor/data/sensor_cfg.ini
+			cp /mnt/data/sensor_cfg.ini.alpha /mnt/data/sensor_cfg.ini
 		fi
-		if [ $(cat /usr/lib/vendor/data/sensor_cfg.ini | wc -l) -eq 0 ]
+		if [ $(cat /mnt/data/sensor_cfg.ini | wc -l) -eq 0 ]
 		then
-			cp /usr/lib/vendor/data/sensor_cfg.ini.beta /usr/lib/vendor/data/sensor_cfg.ini
+			cp /mnt/data/sensor_cfg.ini.beta /mnt/data/sensor_cfg.ini
 		fi
 		# MIPI RX 4N PINMUX MCLK0
 		devmem 0x0300116C 32 0x5
@@ -21,13 +21,13 @@ then
 		echo " alpha "
 	elif [ -e /boot/epsilon ]
 	then
-		if [ ! -e /usr/lib/vendor/data/sensor_cfg.ini ]
+		if [ ! -e /mnt/data/sensor_cfg.ini ]
 		then
-			cp /usr/lib/vendor/data/sensor_cfg.ini.alpha /usr/lib/vendor/data/sensor_cfg.ini
+			cp /mnt/data/sensor_cfg.ini.alpha /mnt/data/sensor_cfg.ini
 		fi
-		if [ $(cat /usr/lib/vendor/data/sensor_cfg.ini | wc -l) -eq 0 ]
+		if [ $(cat /mnt/data/sensor_cfg.ini | wc -l) -eq 0 ]
 		then
-			cp /usr/lib/vendor/data/sensor_cfg.ini.beta /usr/lib/vendor/data/sensor_cfg.ini
+			cp /mnt/data/sensor_cfg.ini.beta /mnt/data/sensor_cfg.ini
 		fi
 		# MIPI RX 4N PINMUX no change
 		#
@@ -35,13 +35,13 @@ then
 		#
 		echo " epsilon "
 	else
-		if [ ! -e /usr/lib/vendor/data/sensor_cfg.ini ]
+		if [ ! -e /mnt/data/sensor_cfg.ini ]
 		then
-			cp /usr/lib/vendor/data/sensor_cfg.ini.beta /usr/lib/vendor/data/sensor_cfg.ini
+			cp /mnt/data/sensor_cfg.ini.beta /mnt/data/sensor_cfg.ini
 		fi
-		if [ $(cat /usr/lib/vendor/data/sensor_cfg.ini | wc -l) -eq 0 ]
+		if [ $(cat /mnt/data/sensor_cfg.ini | wc -l) -eq 0 ]
 		then
-			cp /usr/lib/vendor/data/sensor_cfg.ini.beta /usr/lib/vendor/data/sensor_cfg.ini
+			cp /mnt/data/sensor_cfg.ini.beta /mnt/data/sensor_cfg.ini
 		fi
 		# MIPI RX 4N PINMUX MIPI RX 4N
 		devmem 0x0300116C 32 0x3
@@ -51,7 +51,7 @@ then
 	fi
 	if [ -e /boot/kvmtest ]
 	then
-		cp /usr/lib/vendor/data/sensor_cfg.ini.LT /usr/lib/vendor/data/sensor_cfg.ini
+		cp /mnt/data/sensor_cfg.ini.LT /mnt/data/sensor_cfg.ini
 	fi
 	echo "OK"
 fi

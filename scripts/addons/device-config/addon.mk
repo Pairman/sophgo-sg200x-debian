@@ -22,16 +22,16 @@ firmware-vcodec: $(BUILDDIR)/firmware-vcodec-package-stamp
 $(BUILDDIR)/sensor-config-install-stamp:
 	@mkdir -pv /rootfs/boot/
 	@[ "$(BOARD)" = "licheervnano" -o "$(BOARD)" = "licheea53nano" ] || touch /rootfs/boot/epsilon
-	@mkdir -pv /rootfs/usr/lib/vendor/cfg/param/
-	@mkdir -pv /rootfs/usr/lib/vendor/data/
+	@mkdir -pv /rootfs/mnt/cfg/param/
+	@mkdir -pv /rootfs/mnt/data/
 	@if [ "$(BOARD)" = "licheervnano" -o "$(BOARD)" = "licheea53nano" ]; then \
-		cp -p addons/device-config/overlay/usr/lib/vendor/cfg/param/sipeed_gc4653_30fps_202403261356.bin /rootfs/usr/lib/vendor/cfg/param/cvi_sdr_bin ; \
+		cp -p addons/device-config/overlay/mnt/cfg/param/sipeed_gc4653_30fps_202403261356.bin /rootfs/mnt/cfg/param/cvi_sdr_bin ; \
 	elif [ "$(BOARD)" = "duo256" ]; then \
-		cp -p addons/device-config/overlay/usr/lib/vendor/cfg/param/cvi_sdr_bin_GC2083 /rootfs/usr/lib/vendor/cfg/param/cvi_sdr_bin && \
-		cp -p addons/device-config/overlay/usr/lib/vendor/data/sensor_cfg_GC2083.ini /rootfs/usr/lib/vendor/data/sensor_cfg.ini ; \
+		cp -p addons/device-config/overlay/mnt/cfg/param/cvi_sdr_bin_GC2083 /rootfs/mnt/cfg/param/cvi_sdr_bin && \
+		cp -p addons/device-config/overlay/mnt/data/sensor_cfg_GC2083.ini /rootfs/mnt/data/sensor_cfg.ini ; \
 	elif [ "$(BOARD)" = "duos" ]; then \
-		cp -p addons/device-config/overlay/usr/lib/vendor/cfg/param/cvi_sdr_bin_GC2083 /rootfs/usr/lib/vendor/cfg/param/cvi_sdr_bin && \
-		cp -p addons/device-config/$(BOARD)/usr/lib/vendor/data/sensor_cfg_GC2083.ini /rootfs/usr/lib/vendor/data/sensor_cfg.ini ; \
+		cp -p addons/device-config/overlay/mnt/cfg/param/cvi_sdr_bin_GC2083 /rootfs/mnt/cfg/param/cvi_sdr_bin && \
+		cp -p addons/device-config/$(BOARD)/mnt/data/sensor_cfg_GC2083.ini /rootfs/mnt/data/sensor_cfg.ini ; \
 	fi
 	@mkdir -p /rootfs/tmp/install/
 	@echo " sensor-config" >> /rootfs/tmp/install/systemd-enable
@@ -46,15 +46,15 @@ $(BUILDDIR)/sensor-config-package-stamp:
 	@chmod +x $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/etc/init.d/S02config
 	@mkdir -pv $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/etc/systemd/system/
 	@cp -a addons/device-config/sensor-config*.service $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/etc/systemd/system/
-	@mkdir -pv $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/usr/lib/vendor/cfg/param/
-	@rsync -avpPxH addons/device-config/overlay/usr/lib/vendor/cfg/param/ $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/usr/lib/vendor/cfg/param/
-	@rm -f $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/usr/lib/vendor/cfg/param/cvi_sdr_bin
-	@mkdir -pv $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/usr/lib/vendor/data/
-	@rsync -avpPxH addons/device-config/overlay/usr/lib/vendor/data/ $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/usr/lib/vendor/data/
-	@if [ -e addons/device-config/$(BOARD)/usr/lib/vendor/data ]; then \
-		rsync -avpPxH addons/device-config/$(BOARD)/usr/lib/vendor/data/ $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/usr/lib/vendor/data/ ; \
+	@mkdir -pv $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/mnt/cfg/param/
+	@rsync -avpPxH addons/device-config/overlay/mnt/cfg/param/ $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/mnt/cfg/param/
+	@rm -f $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/mnt/cfg/param/cvi_sdr_bin
+	@mkdir -pv $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/mnt/data/
+	@rsync -avpPxH addons/device-config/overlay/mnt/data/ $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/mnt/data/
+	@if [ -e addons/device-config/$(BOARD)/mnt/data ]; then \
+		rsync -avpPxH addons/device-config/$(BOARD)/mnt/data/ $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/mnt/data/ ; \
 	fi
-	@rm -f $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/usr/lib/vendor/data/sensor_cfg.ini
+	@rm -f $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/mnt/data/sensor_cfg.ini
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)/' $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/DEBIAN/control
 	@sed -i 's/Package: sensor-config/Package: sensor-config-$(BOARD)/' $(BUILDDIR)/package/sensor-config-$(BOARD)-$(MIDDLEWAREVERSION)/DEBIAN/control

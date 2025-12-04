@@ -11,8 +11,8 @@ init_alpha_oled(){
     echo out > /sys/class/gpio/gpio${Alpha_OLED_RST_Pin}/direction
     echo 1 > /sys/class/gpio/gpio${Alpha_OLED_RST_Pin}/value
 
-    rmmod /usr/lib/vendor/system/ko/i2c-gpio.ko
-    rmmod /usr/lib/vendor/system/ko/i2c-algo-bit.ko
+    rmmod /mnt/system/ko/i2c-gpio.ko
+    rmmod /mnt/system/ko/i2c-algo-bit.ko
 }
 
 init_beta_pcie_oled(){
@@ -32,10 +32,10 @@ init_beta_pcie_oled(){
     echo out > /sys/class/gpio/gpio${Beta_OLED_RST_Pin}/direction
     echo 1 > /sys/class/gpio/gpio${Beta_OLED_RST_Pin}/value
 
-    rmmod /usr/lib/vendor/system/ko/i2c-gpio.ko
-    rmmod /usr/lib/vendor/system/ko/i2c-algo-bit.ko
-    insmod /usr/lib/vendor/system/ko/i2c-algo-bit.ko
-    insmod /usr/lib/vendor/system/ko/i2c-gpio.ko
+    rmmod /mnt/system/ko/i2c-gpio.ko
+    rmmod /mnt/system/ko/i2c-algo-bit.ko
+    insmod /mnt/system/ko/i2c-algo-bit.ko
+    insmod /mnt/system/ko/i2c-gpio.ko
 }
 
 kvm_oled_init(){

@@ -14,16 +14,16 @@ then
 	if [ "$panel_value" = "st7701_lct024bsi20" -o "$panel_value" = "d240si31" ]
 	then
 		echo "load cst7xx touchscreen driver"
-		insmod /usr/lib/vendor/system/ko/hynitron_touch_new.ko
+		insmod /mnt/system/ko/hynitron_touch_new.ko
 	elif [ "$panel_value" = "st7701_hd228001c31" ]
 	then
 		echo "load cst3xx touchscreen driver"
-		insmod /usr/lib/vendor/system/ko/hynitron_touch.ko
+		insmod /mnt/system/ko/hynitron_touch.ko
 	fi
 	if [ -e /boot/gt9xx ]
 	then
 		echo "load gt9xx touchscreen driver"
-		insmod /usr/lib/vendor/system/ko/3rd/gt9xx.ko
+		insmod /mnt/system/ko/3rd/gt9xx.ko
 	fi
 	exit 0
 fi

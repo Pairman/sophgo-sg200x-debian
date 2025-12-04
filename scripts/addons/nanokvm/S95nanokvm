@@ -6,14 +6,14 @@ case "$1" in
     echo -n kvm > /boot/hostname.prefix
 
     # Copy sensor config if the file exists
-    [ -f /usr/lib/vendor/data/sensor_cfg.ini.LT ] && cp /usr/lib/vendor/data/sensor_cfg.ini.LT /usr/lib/vendor/data/sensor_cfg.ini
+    [ -f /mnt/data/sensor_cfg.ini.LT ] && cp /mnt/data/sensor_cfg.ini.LT /mnt/data/sensor_cfg.ini
 
     # Generate unique device key
     if [ -f /sys/class/cvi-base/base_uid ]; then
         str_value=$(awk '{print $2}' /sys/class/cvi-base/base_uid)
         first_uint=$(echo "$str_value" | cut -d'_' -f1)
         second_uint=$(echo "$str_value" | cut -d'_' -f2)
-        echo "$first_uint$second_uint" > /etc/machine-id-cvi
+        echo "$first_uint$second_uint" > /device_key
     fi
 
     # Set iptables rules (skip if already present)
