@@ -8,6 +8,6 @@ then
 	result="$first_uint$second_uint"
 	echo $result > /etc/machine-id-cvi
 	# for compatibility with previous network mac addr
-	cat /sys/class/cvi-base/base_uid > /etc/machine-id-cvi
+	cat /sys/class/cvi-base/base_uid > /etc/machine-id-cvi-legacy
 fi
 

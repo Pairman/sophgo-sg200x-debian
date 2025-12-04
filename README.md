@@ -86,9 +86,9 @@ The images are based on the vendor 5.10 kernel and osdrv, also including the fol
 - TPU Drivers
 - Any of the Video Encoding Drivers
 
-The extra drivers are build on a separate package called cvitek-osdrv-(board), they will be installed to /usr/lib/vendor/system/ko
+The extra drivers are build on a separate package called cvitek-osdrv-(board), they will be installed to /mnt/system/ko
 
-The libs and samples are build on a separate package called cvitek-middleware-(board), they will be installed to /usr/lib/vendor/system/usr
+The libs and samples are build on a separate package called cvitek-middleware-(board), they will be installed to /mnt/system/usr
 
 The images, by default, allocate minimum amount of memory for the ION heap to use vi/venc, so you get more memory for the OS
 

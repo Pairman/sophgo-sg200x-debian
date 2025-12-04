@@ -1,6 +1,5 @@
 ifneq ("$(findstring sensor-config,$(IMAGE_ADDITIONS))","")
-# BSPDEPENDS += firmware-vcodec-$(CHIP)
-BSPRECOMMENDS += firmware-vcodec-$(CHIP)
+BSPDEPENDS += firmware-vcodec-$(CHIP)
 endif
 
 $(BUILDDIR)/firmware-vcodec-package-stamp:

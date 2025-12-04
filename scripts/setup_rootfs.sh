@@ -182,7 +182,7 @@ Signed-By: /etc/apt/trusted.gpg.d/pairman-packages.gpg
 EOG
 
 cat >> /etc/systemd/journald.conf <<EOJ
-RuntimeMaxUse=2M
+RuntimeMaxUse=16M
 RuntimeMaxFileSize=2M
 EOJ
 

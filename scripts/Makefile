@@ -184,11 +184,11 @@ endif
 
 MIDDLEWARE_ENV = $(OSDRV_ENV) $(SENSOR_ENV)
 
-BSPDEPENDS = cvitek-osdrv-$(BOARD)-$(VARIANT)\
+BSPDEPENDS = cvitek-middleware-$(BOARD)\
+ cvitek-osdrv-$(BOARD)-$(VARIANT)\
  linux-headers-$(BOARD)-$(VARIANT)\
  linux-image-$(BOARD)-$(VARIANT)
-BSPRECOMMENDS = cvitek-middleware-$(BOARD)\
- cvitek-fsbl-$(BOARD_EXT)
+BSPRECOMMENDS = cvitek-fsbl-$(BOARD_EXT)
 BSPFILTER =
 
 include $(wildcard /builder/addons/*/addon.mk)

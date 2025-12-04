@@ -17,7 +17,7 @@ then
 	then
 		new_wifimac=$(cat /boot/wifi.mac)
 	else
-		new_wifimac=$(hex2mac 48da356a$(sha512sum /etc/machine-id-cvi  | head -c 4))
+		new_wifimac=$(hex2mac 48da356a$(sha512sum /etc/machine-id-cvi-legacy  | head -c 4))
 	fi
 
 	#ifconfig wlan0 down
