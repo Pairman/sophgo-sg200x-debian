@@ -711,8 +711,8 @@ $(BUILDDIR)/image-prepare-stamp:
 	@rm -rf /rootfs/
 	@-rm $(addon-targets)
 	@mkdir -p /rootfs/
-	@curl -v -L https://sg200x.deb.git.pnxlr.eu.org/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" sid "/rootfs/" "deb http://deb.debian.org/debian/ sid main" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://sg200x.deb.git.pnxlr.eu.org/deb stable sg200x $(BOARD)-$(VARIANT)"
+	@curl -v -L https://scpcom.github.io/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" trixie "/rootfs/" "deb http://deb.debian.org/debian/ trixie main" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://scpcom.github.io/deb stable sg200x $(BOARD)-$(VARIANT)"
 	@touch $@
 
 $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) $(BUILDDIR)/linux-package-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
