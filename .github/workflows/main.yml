@@ -36,7 +36,7 @@ jobs:
           id: meta
           uses: docker/metadata-action@v5
           with:
-            images: ghcr.io/scpcom/sophgo-sg200x-debian
+            images: ghcr.io/Pairman/sophgo-sg200x-debian
 
         - name: Build and push Docker image
           if: (github.event_name != 'pull_request' && steps.filter.outputs.src == 'true') || startsWith(github.event.ref, 'refs/tags/v')
@@ -78,7 +78,7 @@ jobs:
       - name: Build Images
         uses: addnab/docker-run-action@v3
         with:
-          image: ghcr.io/scpcom/sophgo-sg200x-debian:${{ github.ref_name }}
+          image: ghcr.io/Pairman/sophgo-sg200x-debian:${{ github.ref_name }}
           options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/
           run: |
             make BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} image
