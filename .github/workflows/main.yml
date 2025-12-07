@@ -81,7 +81,7 @@ jobs:
           image: ghcr.io/pairman/sophgo-sg200x-debian:${{ github.ref_name }}
           options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/
           run: |
-            make BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} image
+            make BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} ION_SIZE=0 image
             chmod 777 /output/
       - name: Pack
         run: |
