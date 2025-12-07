@@ -60,6 +60,11 @@ EOF
 fi
 
 
+# Fix /usr/lib/sysctl.d/50-pid-max.conf invalid argument 
+cat > /etc/sysctl.d/90-override-pid-max.conf <<EOF
+kernel.pid_max = 32768
+EOF
+
 
 #regenerate SSH keys on first boot
 cat > /etc/systemd/system/finalize-image.service <<EOF
@@ -151,26 +156,48 @@ systemctl enable finalize-image.service
 
 # Update source list 
 
+rm -rf /etc/apt/sources.list
 rm -rf /etc/apt/sources.list.d/multistrap-debian.list
 
 #apt-key add /tmp/install/public-key.asc
 gpg --dearmor /tmp/install/public-key.asc
-cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/scpcom-packages.gpg
-
-cat > /etc/apt/sources.list <<EOF
-deb http://deb.debian.org/debian trixie main non-free-firmware
-EOF
+cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/pairman-packages.gpg
 
 mkdir -p /etc/apt/sources.list.d
 
-cat > /etc/apt/sources.list.d/scpcom-packages.list <<EOG
-deb https://scpcom.github.io/deb stable sg200x ${BOARD}-${VARIANT}
+cat > /etc/apt/sources.list.d/debian.sources <<EOF
+Types: deb
+URIs: http://deb.debian.org/debian/
+Suites: sid
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+EOF
+
+cat > /etc/apt/sources.list.d/pairman-packages.sources <<EOG
+Types: deb
+URIs: https://sg200x.deb.git.pnxlr.eu.org/deb/
+Suites: stable
+Components: sg200x ${BOARD}-${VARIANT}
+Signed-By: /etc/apt/trusted.gpg.d/pairman-packages.gpg
 EOG
 
 cat >> /etc/systemd/journald.conf <<EOJ
 RuntimeMaxUse=16M
 RuntimeMaxFileSize=2M
 EOJ
+
+
+#
+# Let NetworkManager manage wlan0
+#
+sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf
+
+
+#
+# Bash completion for root
+#
+sed -i '/enable bash completion/{n; :a; /^#/!b; s/^# //; n; ba}' /etc/bash.bashrc
+
 
 apt-get update
 apt-get install -y chrony
