@@ -458,7 +458,11 @@ $(BUILDDIR)/buildroot-prepare-checkout-stamp:
 	@git clone -b main https://github.com/scpcom/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
+BUILDROOT_PREPARE_PATCH_STAMP_DEP := $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp
+ifneq ($(strip $(ION_SIZE)),0)
+BUILDROOT_PREPARE_PATCH_STAMP_DEP += $(BUILDDIR)/middleware-compile-stamp
+endif
+$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDROOT_PREPARE_PATCH_STAMP_DEP)
 	@echo "$(COLOUR_GREEN)Patching Buildroot for $(BOARD)$(END_COLOUR)"
 	@$(foreach file, $(wildcard /configs/common/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
@@ -715,7 +719,12 @@ $(BUILDDIR)/image-prepare-stamp:
 	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" trixie "/rootfs/" "deb http://deb.debian.org/debian/ trixie main" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://sg200x.deb.git.pnxlr.eu.org/deb stable sg200x $(BOARD)-$(VARIANT)"
 	@touch $@
 
-$(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) $(BUILDDIR)/linux-package-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
+IMAGE_ADDONS_STAMP_DEP := $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) $(BUILDDIR)/linux-package-stamp
+ifneq ($(strip $(ION_SIZE)),0)
+IMAGE_ADDONS_STAMP_DEP += $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp
+endif
+IMAGE_ADDONS_STAMP_DEP += $(addon-targets)
+$(BUILDDIR)/image-addons-stamp: $(IMAGE_ADDONS_STAMP_DEP)
 	@echo "$(COLOUR_GREEN)Packaging board-support-sg200x for $(BOARD)$(END_COLOUR)"
 	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@mkdir -p $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)
@@ -726,7 +735,9 @@ $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) 
 	@sed -i 's/Version: 1.0.0-1/Version: $(BSPVERSION)/' $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/DEBIAN/control
 	@sed -i 's/Package: board-support-sg200x/Package: board-support-$(BOARD)-$(VARIANT)/' $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/DEBIAN/control
 	@sed -i 's/Depends: .*/Depends: $(_BSPDEPENDS)/' $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/DEBIAN/control
-	@sed -i 's|cvitek-osdrv-$(BOARD)-$(VARIANT)|cvitek-osdrv-$(BOARD)-$(VARIANT):$(KERNEL_DEB_ARCH)|g' $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/DEBIAN/control
+	@if [ "$(ION_SIZE)" != "0" ]; then \
+		sed -i 's|cvitek-osdrv-$(BOARD)-$(VARIANT)|cvitek-osdrv-$(BOARD)-$(VARIANT):$(KERNEL_DEB_ARCH)|g' $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/DEBIAN/control \
+	fi
 	@sed -i 's|linux-headers-$(BOARD)-$(VARIANT)|linux-headers-$(BOARD)-$(VARIANT):$(KERNEL_DEB_ARCH)|g' $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/DEBIAN/control
 	@sed -i 's|linux-image-$(BOARD)-$(VARIANT)|linux-image-$(BOARD)-$(VARIANT):$(KERNEL_DEB_ARCH)|g' $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/DEBIAN/control
 	@sed -i 's/Recommends: .*/Recommends: $(_BSPRECOMMENDS)/' $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/DEBIAN/control
@@ -740,8 +751,10 @@ $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) 
 	@cp /output/board-support-$(BOARD)-$(VARIANT)*.deb /rootfs/tmp/install/
 	@echo "$(COLOUR_GREEN)Copying Deb files for installation on $(BOARD)$(END_COLOUR)"
 	@cp /output/cvitek-fsbl-$(BOARD_EXT)_*.deb /rootfs/tmp/install/
-	@cp /output/cvitek-osdrv-*$(BOARD)*.deb /rootfs/tmp/install/
-	@cp /output/cvitek-middleware-$(BOARD)_*.deb /rootfs/tmp/install/
+	@if [ "$(ION_SIZE)" != "0" ]; then \
+		cp /output/cvitek-osdrv-*$(BOARD)*.deb /rootfs/tmp/install/ ; \
+		cp /output/cvitek-middleware-$(BOARD)_*.deb /rootfs/tmp/install/ ; \
+	fi
 	@cp /output/linux-image-*$(BOARD)*.deb /rootfs/tmp/install/
 	@cp /output/linux-headers-*.deb /rootfs/tmp/install/
 	@cp /output/linux-libc-dev*.deb /rootfs/tmp/install/

@@ -154,6 +154,10 @@ EOF
 #
 systemctl enable finalize-image.service
 
+# Disable unneeded services
+systemctl disable avahi-daemon.service
+systemctl disable lldpd.service
+
 # Update source list 
 
 rm -rf /etc/apt/sources.list
@@ -201,7 +205,7 @@ sed -i '/enable bash completion/{n; :a; /^#/!b; s/^# //; n; ba}' /etc/bash.bashr
 
 apt-get update
 apt-get install -y chrony
-
+apt-get install htop tmux
 
 #
 # Clean apt cache on the system

@@ -26,8 +26,10 @@ IMAGE_ADDITIONS += "cvi-pinmux"
 ifneq ("$(findstring kvm,$(VARIANT))","")
 IMAGE_ADDITIONS += "nanokvm"
 else
+ifneq ($(strip $(ION_SIZE)),0)
 IMAGE_ADDITIONS += "maixapp"
 IMAGE_ADDITIONS += "tpusdk"
+endif
 endif
 IMAGE_ADDITIONS += "usb-device"
 IMAGE_ADDITIONS += "zram-config"
