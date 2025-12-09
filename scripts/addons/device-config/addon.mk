@@ -1,7 +1,5 @@
-ifneq ($(strip $(ION_SIZE)),0)
 ifneq ("$(findstring sensor-config,$(IMAGE_ADDITIONS))","")
 BSPDEPENDS += firmware-vcodec-$(CHIP)
-endif
 endif
 
 $(BUILDDIR)/firmware-vcodec-package-stamp:
@@ -68,11 +66,6 @@ $(BUILDDIR)/sensor-config-package-stamp:
 
 sensor-config: $(BUILDDIR)/sensor-config-install-stamp $(BUILDDIR)/sensor-config-package-stamp
 
-SENSOR_CONFIG_STAMP_DEPS :=
-ifneq ($(strip $(ION_SIZE)),0)
-SENSOR_CONFIG_STAMP_DEPS += firmware-vcodec
-endif
-SENSOR_CONFIG_STAMP_DEPS += sensor-config
-$(BUILDDIR)/sensor-config-stamp: $(SENSOR_CONFIG_STAMP_DEPS)
+$(BUILDDIR)/sensor-config-stamp: firmware-vcodec sensor-config
 	@echo "$(COLOUR_GREEN)Installing sensor-config for $(BOARD)$(END_COLOUR)"
 	@touch $@
