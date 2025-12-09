@@ -18,7 +18,7 @@ RUN apt-get update \
         python-is-python3 python3-jinja2 pkg-config xxd \
         python3-setuptools  swig gnupg \
         systemd-container texinfo zlib1g-dev wget arch-test \
-        genimage joe lz4 lzip mc unzip zip \
+        genimage joe lz4 lzip xz-utils mc unzip zip \
         fakeroot git kernel-wedge quilt ccache cmake flex bison \
         libssl-dev dh-exec rsync libelf-dev bc gcc-riscv64-unknown-elf \
     && mkdir -p /host-tools/gcc \

@@ -802,7 +802,7 @@ $(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp
 		cp /tmp/$(BOARD)_$(STORAGE_TYPE).zip /output/; \
 		echo "$(COLOUR_GREEN)Image for $(BOARD) is $(BOARD)_$(STORAGE_TYPE).zip$(END_COLOUR)"; \
 	else \
-		lz4 -9 -f $(BUILDDIR)/images/sdcard.img /output/$(BOARD)-$(VARIANT)_$(STORAGE_TYPE).img.lz4; \
+		xz -T0 -9e -c $(BUILDDIR)/images/sdcard.img /output/$(BOARD)-$(VARIANT)_$(STORAGE_TYPE).img.xz; \
 		echo "$(COLOUR_GREEN)Image for $(BOARD) is $(BOARD)_$(STORAGE_TYPE).img$(END_COLOUR)"; \
 	fi 
 	@touch $@
