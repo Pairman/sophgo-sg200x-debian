@@ -1,8 +1,8 @@
 #!/bin/sh
 panel=
-cp -p /usr/lib/cvitek-fsbl/licheervnano/fip.bin /boot/
-cp -p /usr/lib/cvitek-fsbl/licheervnano/u-boot-initial-env /etc/
-[ -e /boot/logo.jpeg -o ! -e /usr/lib/cvitek-fsbl/licheervnano/logo.jpeg ] || cp -p  /usr/lib/cvitek-fsbl/licheervnano/logo.jpeg /boot/
+cp -p /usr/lib/cvitek/fsbl/licheervnano/fip.bin /boot/
+cp -p /usr/lib/cvitek/fsbl/licheervnano/u-boot-initial-env /etc/
+[ -e /boot/logo.jpeg -o ! -e /usr/lib/cvitek/fsbl/licheervnano/logo.jpeg ] || cp -p  /usr/lib/cvitek/fsbl/licheervnano/logo.jpeg /boot/
 sed -i -e 's|#U_BOOT_SYNC_DTBS=".*"|U_BOOT_SYNC_DTBS="true"|' /etc/default/u-boot
 if grep -q '/dev/mmcblk0p1.*/boot' /etc/fstab ; then
   sed -i -i 's|#U_BOOT_PARAMETERS=".*"|U_BOOT_PARAMETERS="console=ttyS0,115200 earlycon=sbi root=/dev/mmcblk0p2 rootwait rw"|' /etc/default/u-boot

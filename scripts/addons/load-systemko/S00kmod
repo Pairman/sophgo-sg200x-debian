@@ -12,7 +12,7 @@ then
 
 	. /etc/profile
 	printf "load kernel module: "
-	cd /mnt/system/ko/
+	cd /usr/lib/cvitek/osdrv/ko/
 	for ko in ${KERNELRELEASE}/*.ko ; do
 		if [ -e $ko ]; then
 			km=`basename $ko`
