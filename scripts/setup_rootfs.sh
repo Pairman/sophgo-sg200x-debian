@@ -205,7 +205,7 @@ sed -i '/enable bash completion/{n; :a; /^#/!b; s/^# //; n; ba}' /etc/bash.bashr
 
 apt-get update
 apt-get install -y chrony
-apt-get install htop tmux
+apt-get install -y htop tmux
 
 #
 # Clean apt cache on the system
