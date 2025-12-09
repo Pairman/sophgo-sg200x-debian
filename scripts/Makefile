@@ -184,9 +184,12 @@ endif
 
 MIDDLEWARE_ENV = $(OSDRV_ENV) $(SENSOR_ENV)
 
-BSPDEPENDS = cvitek-middleware-$(BOARD)\
- cvitek-osdrv-$(BOARD)-$(VARIANT)\
- linux-headers-$(BOARD)-$(VARIANT)\
+BSPDEPENDS =
+ifneq ($(strip $(ION_SIZE)),0)
+BSPDEPENDS += cvitek-middleware-$(BOARD)\
+ cvitek-osdrv-$(BOARD)-$(VARIANT)
+endif
+BSPDEPENDS += linux-headers-$(BOARD)-$(VARIANT)\
  linux-image-$(BOARD)-$(VARIANT)
 BSPRECOMMENDS = cvitek-fsbl-$(BOARD_EXT)
 BSPFILTER =
