@@ -185,7 +185,7 @@ Components: sg200x ${BOARD}-${VARIANT}
 Signed-By: /etc/apt/trusted.gpg.d/pairman-packages.gpg
 EOG
 
-cat >> /etc/systemd/journald.conf <<EOJ
+cat >> /usr/lib/systemd/journald.conf.d/90-maxuse.conf <<EOJ
 RuntimeMaxUse=16M
 RuntimeMaxFileSize=2M
 EOJ
@@ -195,12 +195,6 @@ EOJ
 # Let NetworkManager manage wlan0
 #
 sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf
-
-
-#
-# Bash completion for root
-#
-sed -i '/enable bash completion/{n; :a; /^#/!b; s/^# //; n; ba}' /etc/bash.bashrc
 
 
 apt-get update
