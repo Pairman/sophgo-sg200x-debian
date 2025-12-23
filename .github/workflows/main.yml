@@ -55,13 +55,14 @@ jobs:
   build-image:
     strategy:
       matrix:
-        boards: [licheervnano]
-        variant: [e]
-        storage: [sd]
       #   boards: [licheervnano, duo256, duos]
       #   variant: [e]
       #   storage: [sd]
-        include: 
+        include:
+          - boards: licheervnano
+            variant: e
+            storage: sd
+            makeenv: ION_SIZE=0
           - boards: licheervnano
             variant: kvm
             storage: sd
@@ -81,7 +82,7 @@ jobs:
           image: ghcr.io/pairman/sophgo-sg200x-debian:${{ github.ref_name }}
           options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/
           run: |
-            make BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} ION_SIZE=0 image
+            make BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} ${{ matrix.makeenv }} image
             chmod 777 /output/
       - name: Pack
         run: |
