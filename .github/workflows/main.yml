@@ -61,10 +61,10 @@ jobs:
       #   boards: [licheervnano, duo256, duos]
       #   variant: [e]
       #   storage: [sd]
-      #   include: 
-      #     - boards: licheervnano
-      #       variant: kvm
-      #       storage: sd
+        include: 
+          - boards: licheervnano
+            variant: kvm
+            storage: sd
       #     - boards: duos
       #       variant: e
       #       storage: emmc
