@@ -6,10 +6,10 @@ ARCH=riscv
 DDR_CFG=ddr3_1866_x16
 ifneq ("$(findstring kvm,$(VARIANT))","")
 BOARD_EXT=$(BOARD)-$(VARIANT)
-ION_SIZE = 35
+ION_SIZE=35
 else
 ifeq ($(origin ION_SIZE), undefined)
-ION_SIZE = 63
+ION_SIZE=63
 endif
 endif
 PANEL_TUNING_DEFAULT?=MIPI_panel_zct2133v1
