@@ -673,7 +673,7 @@ define fsbl_package_action
 	@cp $(BUILDDIR)/fip.bin $(FSBL_PACKAGE_DIR)/usr/lib/cvitek/fsbl/$(BOARD_EXT)${2}/
 	@cp $(BUILDDIR)/u-boot-initial-env $(FSBL_PACKAGE_DIR)/usr/lib/cvitek/fsbl/$(BOARD_EXT)${2}/
 	@[ ! -e /configs/$(BOARD_CFG)/logo.jpeg ] || cp /configs/$(BOARD_CFG)/logo.jpeg $(FSBL_PACKAGE_DIR)/usr/lib/cvitek/fsbl/$(BOARD_EXT)${2}/
-	@sed -i 's|cvitek-fsbl/licheervnano|cvitek-fsbl/$(BOARD_EXT)${2}|g' $(FSBL_PACKAGE_DIR)/DEBIAN/postinst
+	@sed -i 's|cvitek/fsbl/licheervnano|cvitek/fsbl/$(BOARD_EXT)${2}|g' $(FSBL_PACKAGE_DIR)/DEBIAN/postinst
 	@[ "X$(PANEL_NAME_FSBL)" = "X" ] || sed -i s/'^panel='/'panel='$(PANEL_NAME_FSBL)/g $(FSBL_PACKAGE_DIR)/DEBIAN/postinst
 	@chmod ugo+rx $(FSBL_PACKAGE_DIR)/DEBIAN/postinst
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(FSBL_PACKAGE_DIR)/DEBIAN/control
