@@ -194,7 +194,7 @@ EOJ
 #
 # Let NetworkManager manage wlan0
 #
-sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf
+sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf || true
 
 
 apt-get update
