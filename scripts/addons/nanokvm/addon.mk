@@ -22,6 +22,10 @@ $(BUILDDIR)/nanokvm-stamp: $(BUILDDIR)/buildroot-package-stamp
 	@cp -a addons/nanokvm/nanokvm*.service $(BUILDDIR)/package/nanokvm-$(BOARD)-$(NANOKVMVERSION)/etc/systemd/system/
 	@mkdir -pv $(BUILDDIR)/package/nanokvm-$(BOARD)-$(NANOKVMVERSION)/kvmapp/
 	@rsync -avpPxH $(BR_OUTPUT_DIR)/target/kvmapp/ $(BUILDDIR)/package/nanokvm-$(BOARD)-$(NANOKVMVERSION)/kvmapp/
+	@for f in S01fs S02kvmoled S03usbdev S15kvmhwd S30wifi S95nanokvm; do \
+		cp -p addons/nanokvm/$$f $(BUILDDIR)/package/nanokvm-$(BOARD)-$(NANOKVMVERSION)/kvmapp/system/init.d/; \
+		chmod +x $(BUILDDIR)/package/nanokvm-$(BOARD)-$(NANOKVMVERSION)/kvmapp/system/init.d/$$f; \
+	done
 	@sed -i s/'i2cdetect -ry'/'i2cdetect -r -y'/g $(BUILDDIR)/package/nanokvm-$(BOARD)-$(NANOKVMVERSION)/etc/init.d/S15kvmhwd
 	@sed -i 's|# cp -r /kvmapp/server|cp -r /kvmapp/server|g' $(BUILDDIR)/package/nanokvm-$(BOARD)-$(NANOKVMVERSION)/etc/init.d/S95nanokvm
 	@sed -i 's|# /tmp/server/NanoKVM-Server|/tmp/server/NanoKVM-Server|g' $(BUILDDIR)/package/nanokvm-$(BOARD)-$(NANOKVMVERSION)/etc/init.d/S95nanokvm
