@@ -8,7 +8,6 @@ CHIP_VENDOR=$(cat /tmp/install/chip_vendor)
 VARIANT=$(cat /tmp/install/variant)
 HOSTNAME=$(cat /tmp/install/hostname)
 STORAGETYPE=$(cat /tmp/install/storage)
-GIT_USER=$(cat /tmp/install/git_user)
 
 
 export LC_ALL=C LANGUAGE=C LANG=C
@@ -150,7 +149,7 @@ rm -rf /etc/apt/sources.list.d/multistrap-debian.list
 #apt-key add /tmp/install/public-key.asc
 gpg --dearmor /tmp/install/public-key.asc
 # cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/scpcom-packages.gpg
-cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/${GIT_USER}-packages.gpg
+cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/pairman-packages.gpg
 
 mkdir -p /etc/apt/sources.list.d
 

@@ -794,8 +794,8 @@ $(BUILDDIR)/image-prepare-stamp:
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY) || true
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
 # 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
-	@curl -v -L $(USER_SITE_URL)/$(GIT_USER)-packages.asc -o $(BUILDDIR)/public-key.asc
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
+	@curl -v -L $(USER_SITE_URL)/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://sg200x.deb.git.pnxlr.eu.org/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
 	@touch $@
 
 $(BUILDDIR)/image-configure-stamp: $(BUILDDIR)/image-prepare-stamp $(BUILDDIR)/linux-package-stamp $(FSBL_TARGETS)
@@ -866,7 +866,6 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 	@echo $(STORAGE_TYPE) > /rootfs/tmp/install/storage
 # 	@echo "deb $(DEB_URL) $(DEB_DISTRO) $(DEB_COMPONENTS_FULL)" > /rootfs/tmp/install/deb_sources
 # 	@echo "deb $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)" > /rootfs/tmp/install/deb_user_sources
-	@echo "$(GIT_USER)" > /rootfs/tmp/install/git_user
 	@printf '%s\n' \
 		'Types: deb' \
 		'URIs: $(DEB_URL)' \
@@ -876,11 +875,11 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 		> /rootfs/tmp/install/debian.sources
 	@printf '%s\n' \
 		'Types: deb' \
-		'URIs: $(USER_SITE_URL)/deb' \
+		'URIs: https://sg200x.deb.git.pnxlr.eu.org/deb' \
 		'Suites: stable' \
 		'Components: $(CHIP_FAMILY) $(BOARD)-$(VARIANT)' \
-		'Signed-By: /etc/apt/trusted.gpg.d/$(GIT_USER)-packages.gpg' \
-		> /rootfs/tmp/install/$(GIT_USER)-packages.sources
+		'Signed-By: /etc/apt/trusted.gpg.d/pairman-packages.gpg' \
+		> /rootfs/tmp/install/pairman-packages.sources
 	@cp -v /usr/bin/qemu-$(QEMU_ARCH)-static /rootfs/tmp/install/
 	@cp -v /configs/chip/$(CHIP_FAMILY)/setup_rootfs.sh /rootfs/tmp/install/
 	@cp -v $(BUILDDIR)/public-key.asc /rootfs/tmp/install/
