@@ -9,8 +9,10 @@ BOARD_EXT=$(BOARD)-$(VARIANT)
 ION_SIZE=35
 MMC_MAX_FREQUENCY ?= 50000000
 else
+ifeq ($(origin ION_SIZE), undefined)
 ION_SIZE=63
 MMC_MAX_FREQUENCY ?= 25000000
+endif
 endif
 PANEL_TUNING_DEFAULT?=MIPI_panel_zct2133v1
 PANEL_TUNING_EXTRA?=MIPI_panel_lt9611_1024x768_60hz MIPI_panel_lt9611_1280x720_60hz MIPI_panel_mtd700920b MIPI_panel_d240si31 MIPI_panel_st7701_hd228001c31 MIPI_panel_st7701_hd228001c31_alt0 MIPI_panel_st7701_lhcm228ts003a MIPI_panel_st7701_d300fpc9307a MIPI_panel_st7701_d310t9362v1 MIPI_panel_st7701_dxq5d0019b480854 MIPI_panel_st7701_dxq5d0019_v0
@@ -29,8 +31,10 @@ IMAGE_ADDITIONS += "cvi-pinmux"
 ifneq ("$(findstring kvm,$(VARIANT))","")
 IMAGE_ADDITIONS += "nanokvm"
 else
+ifneq ($(strip $(ION_SIZE)),0)
 IMAGE_ADDITIONS += "maixapp"
 IMAGE_ADDITIONS += "tpusdk"
+endif
 endif
 IMAGE_ADDITIONS += "python3-textual"
 IMAGE_ADDITIONS += "usb-device"

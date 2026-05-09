@@ -1,10 +1,10 @@
 name: Build Docker Image
 on:
-  push:
-    tags:
-      - '*'
-    branches:
-      - '*'
+  # push:
+  #   tags:
+  #     - '*'
+  #   branches:
+  #     - '*'
   workflow_dispatch:
   
 jobs:
@@ -36,7 +36,7 @@ jobs:
           id: meta
           uses: docker/metadata-action@v5
           with:
-            images: ghcr.io/scpcom/sophgo-sg200x-debian
+            images: ghcr.io/pairman/sophgo-sg200x-debian
 
         - name: Build and push Docker image
           if: (github.event_name != 'pull_request' && steps.filter.outputs.src == 'true') || startsWith(github.event.ref, 'refs/tags/v')
@@ -55,23 +55,28 @@ jobs:
   build-image:
     strategy:
       matrix:
-        boards: [licheervnano, duo256, duos]
-        variant: [e]
-        storage: [sd]
-        archs: [riscv]
+        # boards: [licheervnano, duo256, duos]
+        # variant: [e]
+        # storage: [sd]
+        # archs: [riscv]
         include: 
-          - boards: nanokvmpro
-            variant: kvm
-            storage: emmc
-            archs: arm64
+          # - boards: nanokvmpro
+          #   variant: kvm
+          #   storage: emmc
+          #   archs: arm64
+          - boards: licheervnano
+            variant: e
+            storage: sd
+            archs: riscv
+            makeenv: ION_SIZE=0
           - boards: licheervnano
             variant: kvm
             storage: sd
             archs: riscv
-          - boards: duos
-            variant: e
-            storage: emmc
-            archs: riscv
+          # - boards: duos
+          #   variant: e
+          #   storage: emmc
+          #   archs: riscv
     runs-on: ubuntu-latest
     needs: build-docker-image
     steps:
@@ -82,10 +87,10 @@ jobs:
       - name: Build Images
         uses: scpcom/docker-run-action@v4
         with:
-          image: ghcr.io/scpcom/sophgo-sg200x-debian:${{ github.ref_name }}
+          image: ghcr.io/pairman/sophgo-sg200x-debian:${{ github.ref_name }}
           options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/
           run: |
-            make ARCH=${{ matrix.archs }} BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} image
+            make ARCH=${{ matrix.archs }} BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} ${{ matrix.makeenv }} image
             chmod 777 /output/
       - name: Pack
         run: |
@@ -101,7 +106,7 @@ jobs:
           path: |
             ${{env.PACKAGE}}
   release:
-    if: startsWith(github.ref, 'refs/tags/')
+    # if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     needs: [build-image]
     permissions: write-all
@@ -112,9 +117,15 @@ jobs:
         run: |
           ls -lah
           ls -lah image-files-*/
+      - name: create release tag
+        id: create_tag
+        run: |
+          echo GH_RELEASE_TAG="v$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
       - name: publish artifacts
         uses: softprops/action-gh-release@v2.4.2
         with:
+          tag_name: ${{ env.GH_RELEASE_TAG }}
+          token: ${{ secrets.GH_TOKEN_RELEASES }}
           append_body: true
           files: |
             image-files-*/*

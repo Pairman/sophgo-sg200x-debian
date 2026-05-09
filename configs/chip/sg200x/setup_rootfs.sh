@@ -8,6 +8,7 @@ CHIP_VENDOR=$(cat /tmp/install/chip_vendor)
 VARIANT=$(cat /tmp/install/variant)
 HOSTNAME=$(cat /tmp/install/hostname)
 STORAGETYPE=$(cat /tmp/install/storage)
+GIT_USER=$(cat /tmp/install/git_user)
 
 
 export LC_ALL=C LANGUAGE=C LANG=C
@@ -137,24 +138,51 @@ EOF
 #
 systemctl enable finalize-image.service
 
+# Disable unneeded services
+systemctl disable avahi-daemon.service
+systemctl disable lldpd.service
+
 # Update source list 
 
+rm -rf /etc/apt/sources.list
 rm -rf /etc/apt/sources.list.d/multistrap-debian.list
 
 #apt-key add /tmp/install/public-key.asc
 gpg --dearmor /tmp/install/public-key.asc
-cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/scpcom-packages.gpg
-
-cat > /etc/apt/sources.list < /tmp/install/deb_sources
+# cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/scpcom-packages.gpg
+cp /tmp/install/public-key.asc.gpg /etc/apt/trusted.gpg.d/${GIT_USER}-packages.gpg
 
 mkdir -p /etc/apt/sources.list.d
 
-cat > /etc/apt/sources.list.d/scpcom-packages.list < /tmp/install/deb_user_sources
+# cat > /etc/apt/sources.list.d/scpcom-packages.list < /tmp/install/deb_sources
+# cat > /etc/apt/sources.list.d/scpcom-packages.list < /tmp/install/deb_user_sources
+cp /tmp/install/debian.sources /etc/apt/sources.list.d/
+cp /tmp/install/pairman-packages.sources /etc/apt/sources.list.d/
 
-cat >> /etc/systemd/journald.conf <<EOJ
+# cat >> /etc/systemd/journald.conf <<EOJ
+mkdir -p /usr/lib/systemd/journald.conf.d/
+cat >> /usr/lib/systemd/journald.conf.d/90-maxuse.conf <<EOJ
 RuntimeMaxUse=16M
 RuntimeMaxFileSize=2M
 EOJ
+
+
+# Fix /usr/lib/sysctl.d/50-pid-max.conf invalid argument 
+cat > /etc/sysctl.d/90-override-pid-max.conf <<EOF
+kernel.pid_max = 32768
+EOF
+
+
+#
+# Let NetworkManager manage wlan0
+#
+sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf || true
+
+
+#
+# Install extra packages
+#
+apt-get install -y htop tmux
 
 
 #

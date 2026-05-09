@@ -116,8 +116,15 @@ endif
 
 MIDDLEWARE_ENV = $(OSDRV_ENV) $(SENSOR_ENV)
 
-BSPDEPENDS = $(CHIP_VENDOR)-middleware-$(BOARD)\
- $(CHIP_VENDOR)-osdrv-$(BOARD)-$(VARIANT)\
+# BSPDEPENDS = $(CHIP_VENDOR)-middleware-$(BOARD)\
+#  $(CHIP_VENDOR)-osdrv-$(BOARD)-$(VARIANT)\
+#  linux-headers-$(BOARD)-$(VARIANT)\
+#  linux-image-$(BOARD)-$(VARIANT)
+BSPDEPENDS =
+ifneq ($(strip $(ION_SIZE)),0)
+BSPDEPENDS += $(CHIP_VENDOR)-middleware-$(BOARD)
+endif
+BSPDEPENDS += $(CHIP_VENDOR)-osdrv-$(BOARD)-$(VARIANT)\
  linux-headers-$(BOARD)-$(VARIANT)\
  linux-image-$(BOARD)-$(VARIANT)
 BSPRECOMMENDS = $(CHIP_VENDOR)-fsbl-$(BOARD_EXT)
@@ -504,7 +511,11 @@ $(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-chec
 	@cd $(BR_DIR) && git checkout 390f294
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
+BUILDROOT_PREPARE_PATCH_STAMP_DEP := $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp
+ifneq ($(strip $(ION_SIZE)),0)
+BUILDROOT_PREPARE_PATCH_STAMP_DEP += $(BUILDDIR)/middleware-compile-stamp
+endif
+$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDROOT_PREPARE_PATCH_STAMP_DEP)
 	@echo "$(COLOUR_GREEN)Patching Buildroot for $(BOARD)$(END_COLOUR)"
 	@$(foreach file, $(wildcard /configs/common/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
@@ -782,7 +793,8 @@ $(BUILDDIR)/image-prepare-stamp:
 	@mkdir -p /rootfs/
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY) || true
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
-	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
+# 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
+	@curl -v -L $(USER_SITE_URL)/$(GIT_USER)-packages.asc -o $(BUILDDIR)/public-key.asc
 	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
 	@touch $@
 
@@ -800,7 +812,13 @@ $(BUILDDIR)/image-configure-stamp: $(BUILDDIR)/image-prepare-stamp $(BUILDDIR)/l
 	@umount /rootfs/dev || true
 	@touch $@
 
-$(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-configure-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
+# $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-configure-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
+IMAGE_ADDONS_STAMP_DEP := $(BUILDDIR)/image-configure-stamp $(BUILDDIR)/osdrv-package-stamp
+ifneq ($(strip $(ION_SIZE)),0)
+IMAGE_ADDONS_STAMP_DEP += $(BUILDDIR)/middleware-package-stamp
+endif
+IMAGE_ADDONS_STAMP_DEP += $(addon-targets)
+$(BUILDDIR)/image-addons-stamp: $(IMAGE_ADDONS_STAMP_DEP)
 	@echo "$(COLOUR_GREEN)Packaging board-support-$(CHIP_FAMILY) for $(BOARD)$(END_COLOUR)"
 	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@$(eval BOARD_SUPPORT_PACKAGE_DIR=$(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION))
@@ -827,7 +845,10 @@ $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-configure-stamp $(BUILDDIR)/os
 	@echo "$(COLOUR_GREEN)Copying Deb files for installation on $(BOARD)$(END_COLOUR)"
 	@cp /output/$(CHIP_VENDOR)-fsbl-$(BOARD_EXT)_*.deb /rootfs/tmp/install/
 	@cp /output/$(CHIP_VENDOR)-osdrv-*$(BOARD)*.deb /rootfs/tmp/install/
-	@cp /output/$(CHIP_VENDOR)-middleware-$(BOARD)_*.deb /rootfs/tmp/install/
+# 	@cp /output/$(CHIP_VENDOR)-middleware-$(BOARD)_*.deb /rootfs/tmp/install/
+	@if [ "$(ION_SIZE)" != "0" ]; then \
+		cp /output/$(CHIP_VENDOR)-middleware-$(BOARD)_*.deb /rootfs/tmp/install/; \
+	fi
 	@cp /output/linux-image-*$(BOARD)*.deb /rootfs/tmp/install/
 	@cp /output/linux-headers-*.deb /rootfs/tmp/install/
 	@cp /output/linux-libc-dev*.deb /rootfs/tmp/install/
@@ -843,8 +864,23 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 	@echo $(CHIP_VENDOR) > /rootfs/tmp/install/chip_vendor
 	@echo $(VARIANT) > /rootfs/tmp/install/variant
 	@echo $(STORAGE_TYPE) > /rootfs/tmp/install/storage
-	@echo "deb $(DEB_URL) $(DEB_DISTRO) $(DEB_COMPONENTS_FULL)" > /rootfs/tmp/install/deb_sources
-	@echo "deb $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)" > /rootfs/tmp/install/deb_user_sources
+# 	@echo "deb $(DEB_URL) $(DEB_DISTRO) $(DEB_COMPONENTS_FULL)" > /rootfs/tmp/install/deb_sources
+# 	@echo "deb $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)" > /rootfs/tmp/install/deb_user_sources
+	@echo "$(GIT_USER)" > /rootfs/tmp/install/git_user
+	@printf '%s\n' \
+		'Types: deb' \
+		'URIs: $(DEB_URL)' \
+		'Suites: $(DEB_DISTRO)' \
+		'Components: $(DEB_COMPONENTS_FULL)' \
+		'Signed-By: $(DEB_KEYRING)' \
+		> /rootfs/tmp/install/debian.sources
+	@printf '%s\n' \
+		'Types: deb' \
+		'URIs: $(USER_SITE_URL)/deb' \
+		'Suites: stable' \
+		'Components: $(CHIP_FAMILY) $(BOARD)-$(VARIANT)' \
+		'Signed-By: /etc/apt/trusted.gpg.d/$(GIT_USER)-packages.gpg' \
+		> /rootfs/tmp/install/$(GIT_USER)-packages.sources
 	@cp -v /usr/bin/qemu-$(QEMU_ARCH)-static /rootfs/tmp/install/
 	@cp -v /configs/chip/$(CHIP_FAMILY)/setup_rootfs.sh /rootfs/tmp/install/
 	@cp -v $(BUILDDIR)/public-key.asc /rootfs/tmp/install/
@@ -875,7 +911,7 @@ $(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp
 		cp /tmp/$(BOARD)_$(STORAGE_TYPE).zip /output/; \
 		echo "$(COLOUR_GREEN)Image for $(BOARD) is $(BOARD)_$(STORAGE_TYPE).zip$(END_COLOUR)"; \
 	else \
-		lz4 -9 -f $(BUILDDIR)/images/sdcard.img /output/$(BOARD)-$(VARIANT)_$(STORAGE_TYPE).img.lz4; \
+		xz -T0 -9e -c $(BUILDDIR)/images/sdcard.img > /output/$(BOARD)-$(VARIANT)_$(STORAGE_TYPE).img.xz; \
 		echo "$(COLOUR_GREEN)Image for $(BOARD) is $(BOARD)_$(STORAGE_TYPE).img$(END_COLOUR)"; \
 	fi 
 	@touch $@
