@@ -12,9 +12,9 @@ LIBJPEG_TURBO_DL_DIR = $(BUILDDIR)/libjpeg-turbo
 
 $(BUILDDIR)/libjpeg-turbo-prepare-stamp:
 	@mkdir -p $(LIBJPEG_TURBO_DL_DIR)
-	@cd $(LIBJPEG_TURBO_DL_DIR) && wget -N $(LIBJPEG_TURBO_BASE_URL)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION)-$(LIBJPEG_TURBO_BUILD).debian.tar.xz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION)-$(LIBJPEG_TURBO_BUILD).debian.tar.xz
-	@cd $(LIBJPEG_TURBO_DL_DIR) && wget -N $(LIBJPEG_TURBO_BASE_URL)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION)-$(LIBJPEG_TURBO_BUILD).dsc || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION)-$(LIBJPEG_TURBO_BUILD).dsc
-	@cd $(LIBJPEG_TURBO_DL_DIR) && wget -N $(LIBJPEG_TURBO_BASE_URL)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION).orig.tar.gz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION).orig.tar.gz
+	@cd $(LIBJPEG_TURBO_DL_DIR) && wget -N $(LIBJPEG_TURBO_BASE_URL)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION)-$(LIBJPEG_TURBO_BUILD).debian.tar.xz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION)-$(LIBJPEG_TURBO_BUILD).debian.tar.xz
+	@cd $(LIBJPEG_TURBO_DL_DIR) && wget -N $(LIBJPEG_TURBO_BASE_URL)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION)-$(LIBJPEG_TURBO_BUILD).dsc || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION)-$(LIBJPEG_TURBO_BUILD).dsc
+	@cd $(LIBJPEG_TURBO_DL_DIR) && wget -N $(LIBJPEG_TURBO_BASE_URL)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION).orig.tar.gz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libjpeg-turbo_$(LIBJPEG_TURBO_VERSION).orig.tar.gz
 	@mkdir /rootfs/root/source-libjpeg-turbo && \
 		cp -p $(LIBJPEG_TURBO_DL_DIR)/libjpeg-turbo_* /rootfs/root/source-libjpeg-turbo/ && \
 		echo OK

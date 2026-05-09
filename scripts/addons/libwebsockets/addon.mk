@@ -11,9 +11,9 @@ LIBWEBSOCKETS_DL_DIR = $(BUILDDIR)/libwebsockets
 
 $(BUILDDIR)/libwebsockets-prepare-stamp:
 	@mkdir -p $(LIBWEBSOCKETS_DL_DIR)
-	@cd $(LIBWEBSOCKETS_DL_DIR) && wget -N $(LIBWEBSOCKETS_BASE_URL)/libwebsockets_$(LIBWEBSOCKETS_VERSION)-$(LIBWEBSOCKETS_BUILD).debian.tar.xz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libwebsockets_$(LIBWEBSOCKETS_VERSION)-$(LIBWEBSOCKETS_BUILD).debian.tar.xz
-	@cd $(LIBWEBSOCKETS_DL_DIR) && wget -N $(LIBWEBSOCKETS_BASE_URL)/libwebsockets_$(LIBWEBSOCKETS_VERSION)-$(LIBWEBSOCKETS_BUILD).dsc || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libwebsockets_$(LIBWEBSOCKETS_VERSION)-$(LIBWEBSOCKETS_BUILD).dsc
-	@cd $(LIBWEBSOCKETS_DL_DIR) && wget -N $(LIBWEBSOCKETS_BASE_URL)/libwebsockets_$(LIBWEBSOCKETS_VERSION).orig.tar.gz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libwebsockets_$(LIBWEBSOCKETS_VERSION).orig.tar.gz
+	@cd $(LIBWEBSOCKETS_DL_DIR) && wget -N $(LIBWEBSOCKETS_BASE_URL)/libwebsockets_$(LIBWEBSOCKETS_VERSION)-$(LIBWEBSOCKETS_BUILD).debian.tar.xz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libwebsockets_$(LIBWEBSOCKETS_VERSION)-$(LIBWEBSOCKETS_BUILD).debian.tar.xz
+	@cd $(LIBWEBSOCKETS_DL_DIR) && wget -N $(LIBWEBSOCKETS_BASE_URL)/libwebsockets_$(LIBWEBSOCKETS_VERSION)-$(LIBWEBSOCKETS_BUILD).dsc || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libwebsockets_$(LIBWEBSOCKETS_VERSION)-$(LIBWEBSOCKETS_BUILD).dsc
+	@cd $(LIBWEBSOCKETS_DL_DIR) && wget -N $(LIBWEBSOCKETS_BASE_URL)/libwebsockets_$(LIBWEBSOCKETS_VERSION).orig.tar.gz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libwebsockets_$(LIBWEBSOCKETS_VERSION).orig.tar.gz
 	@mkdir /rootfs/root/source-websockets && \
 		cp -p $(LIBWEBSOCKETS_DL_DIR)/libwebsockets_* /rootfs/root/source-websockets/ && \
 		cp /configs/chip/ax620e/patches/libwebsockets/0001-openssl-server-enum-vs-int-disagreement.patch /rootfs/root/source-websockets/ && \

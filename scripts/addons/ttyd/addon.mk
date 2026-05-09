@@ -12,9 +12,9 @@ TTYD_DL_DIR = $(BUILDDIR)/ttyd
 
 $(BUILDDIR)/ttyd-prepare-stamp:
 	@mkdir -p $(TTYD_DL_DIR)
-	@cd $(TTYD_DL_DIR) && wget -N $(TTYD_BASE_URL)/ttyd_$(TTYD_VERSION)-$(TTYD_BUILD).debian.tar.xz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/ttyd_$(TTYD_VERSION)-$(TTYD_BUILD).debian.tar.xz
-	@cd $(TTYD_DL_DIR) && wget -N $(TTYD_BASE_URL)/ttyd_$(TTYD_VERSION)-$(TTYD_BUILD).dsc || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/ttyd_$(TTYD_VERSION)-$(TTYD_BUILD).dsc
-	@cd $(TTYD_DL_DIR) && wget -N $(TTYD_BASE_URL)/ttyd_$(TTYD_VERSION).orig.tar.xz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/ttyd_$(TTYD_VERSION).orig.tar.xz
+	@cd $(TTYD_DL_DIR) && wget -N $(TTYD_BASE_URL)/ttyd_$(TTYD_VERSION)-$(TTYD_BUILD).debian.tar.xz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/ttyd_$(TTYD_VERSION)-$(TTYD_BUILD).debian.tar.xz
+	@cd $(TTYD_DL_DIR) && wget -N $(TTYD_BASE_URL)/ttyd_$(TTYD_VERSION)-$(TTYD_BUILD).dsc || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/ttyd_$(TTYD_VERSION)-$(TTYD_BUILD).dsc
+	@cd $(TTYD_DL_DIR) && wget -N $(TTYD_BASE_URL)/ttyd_$(TTYD_VERSION).orig.tar.xz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/ttyd_$(TTYD_VERSION).orig.tar.xz
 	@mkdir /rootfs/root/source-ttyd && \
 		cp -p $(TTYD_DL_DIR)/ttyd_* /rootfs/root/source-ttyd/ && \
 		echo OK

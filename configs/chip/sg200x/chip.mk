@@ -794,8 +794,8 @@ $(BUILDDIR)/image-prepare-stamp:
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY) || true
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
 # 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
-	@curl -v -L $(USER_SITE_URL)/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://sg200x.deb.git.pnxlr.eu.org/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
+	@curl -v -L $(USER_DEB_URL)/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_DEB_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
 	@touch $@
 
 $(BUILDDIR)/image-configure-stamp: $(BUILDDIR)/image-prepare-stamp $(BUILDDIR)/linux-package-stamp $(FSBL_TARGETS)
@@ -875,7 +875,7 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 		> /rootfs/tmp/install/debian.sources
 	@printf '%s\n' \
 		'Types: deb' \
-		'URIs: https://sg200x.deb.git.pnxlr.eu.org/deb' \
+		'URIs: $(USER_DEB_URL)/deb' \
 		'Suites: stable' \
 		'Components: $(CHIP_FAMILY) $(BOARD)-$(VARIANT)' \
 		'Signed-By: /etc/apt/trusted.gpg.d/pairman-packages.gpg' \

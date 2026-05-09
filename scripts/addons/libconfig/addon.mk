@@ -12,9 +12,9 @@ LIBCONFIG_DL_DIR = $(BUILDDIR)/libconfig
 
 $(BUILDDIR)/libconfig-prepare-stamp:
 	@mkdir -p $(LIBCONFIG_DL_DIR)
-	@cd $(LIBCONFIG_DL_DIR) && wget -N $(LIBCONFIG_BASE_URL)/libconfig_$(LIBCONFIG_VERSION)-$(LIBCONFIG_BUILD).debian.tar.xz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libconfig_$(LIBCONFIG_VERSION)-$(LIBCONFIG_BUILD).debian.tar.xz
-	@cd $(LIBCONFIG_DL_DIR) && wget -N $(LIBCONFIG_BASE_URL)/libconfig_$(LIBCONFIG_VERSION)-$(LIBCONFIG_BUILD).dsc || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libconfig_$(LIBCONFIG_VERSION)-$(LIBCONFIG_BUILD).dsc
-	@cd $(LIBCONFIG_DL_DIR) && wget -N $(LIBCONFIG_BASE_URL)/libconfig_$(LIBCONFIG_VERSION).orig.tar.gz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libconfig_$(LIBCONFIG_VERSION).orig.tar.gz
+	@cd $(LIBCONFIG_DL_DIR) && wget -N $(LIBCONFIG_BASE_URL)/libconfig_$(LIBCONFIG_VERSION)-$(LIBCONFIG_BUILD).debian.tar.xz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libconfig_$(LIBCONFIG_VERSION)-$(LIBCONFIG_BUILD).debian.tar.xz
+	@cd $(LIBCONFIG_DL_DIR) && wget -N $(LIBCONFIG_BASE_URL)/libconfig_$(LIBCONFIG_VERSION)-$(LIBCONFIG_BUILD).dsc || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libconfig_$(LIBCONFIG_VERSION)-$(LIBCONFIG_BUILD).dsc
+	@cd $(LIBCONFIG_DL_DIR) && wget -N $(LIBCONFIG_BASE_URL)/libconfig_$(LIBCONFIG_VERSION).orig.tar.gz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libconfig_$(LIBCONFIG_VERSION).orig.tar.gz
 	@mkdir /rootfs/root/source-libconfig && \
 		cp -p $(LIBCONFIG_DL_DIR)/libconfig_* /rootfs/root/source-libconfig/ && \
 		echo OK

@@ -14,9 +14,9 @@ LIBGPIOD_DL_DIR = $(BUILDDIR)/libgpiod
 $(BUILDDIR)/libgpiod-prepare-stamp: $(BUILDDIR)/python3-dev-install-stamp
 	@echo "$(COLOUR_GREEN)Building libgpiod for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(LIBGPIOD_DL_DIR)
-	@cd $(LIBGPIOD_DL_DIR) && wget -N $(LIBGPIOD_BASE_URL)/libgpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD).debian.tar.xz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libgpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD).debian.tar.xz
-	@cd $(LIBGPIOD_DL_DIR) && wget -N $(LIBGPIOD_BASE_URL)/libgpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD).dsc || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libgpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD).dsc
-	@cd $(LIBGPIOD_DL_DIR) && wget -N $(LIBGPIOD_BASE_URL)/libgpiod_$(LIBGPIOD_VERSION).orig.tar.xz || wget -N $(USER_SITE_URL)/deb/pool/$(CHIP_FAMILY)/libgpiod_$(LIBGPIOD_VERSION).orig.tar.xz
+	@cd $(LIBGPIOD_DL_DIR) && wget -N $(LIBGPIOD_BASE_URL)/libgpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD).debian.tar.xz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libgpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD).debian.tar.xz
+	@cd $(LIBGPIOD_DL_DIR) && wget -N $(LIBGPIOD_BASE_URL)/libgpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD).dsc || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libgpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD).dsc
+	@cd $(LIBGPIOD_DL_DIR) && wget -N $(LIBGPIOD_BASE_URL)/libgpiod_$(LIBGPIOD_VERSION).orig.tar.xz || wget -N $(USER_DEB_URL)/deb/pool/$(CHIP_FAMILY)/libgpiod_$(LIBGPIOD_VERSION).orig.tar.xz
 	@mkdir /rootfs/root/source-libgpiod && \
 		cp -p $(LIBGPIOD_DL_DIR)/libgpiod_* /rootfs/root/source-libgpiod/ && \
 		echo OK
