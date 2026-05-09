@@ -68,7 +68,7 @@ jobs:
             variant: e
             storage: sd
             archs: riscv
-            makeenv: ION_SIZE=0
+            # makeenv: ION_SIZE=0
           - boards: licheervnano
             variant: kvm
             storage: sd
