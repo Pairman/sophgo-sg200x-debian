@@ -115,6 +115,11 @@ for f in */.git ; do
       do_pull_push $x $u $s
     done
     git checkout $b
+  elif echo $d | grep -q -E '^maixcdk-dl-pkgs$' ; then
+    for x in main full ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
   elif echo $d | grep -q -E '^middleware$' ; then
     for x in maix_mmf-cvisdk licheervnano ; do
       do_pull_push $x $u $s
