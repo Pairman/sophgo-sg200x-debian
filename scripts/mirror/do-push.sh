@@ -237,6 +237,7 @@ for f in */.git ; do
   elif echo $d | grep -q -E '^janus-gateway$' ; then
     do_push_tags 'v1.*'
   elif echo $d | grep -q -E '^kaldi-native-fbank$' ; then
+    do_push_tags 'v1.20*'
     do_push_tags 'v1.21*'
   elif echo $d | grep -q -E '^kissfft$' ; then
     do_push_tags '131*'
