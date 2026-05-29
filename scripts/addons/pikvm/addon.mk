@@ -4,7 +4,7 @@ endif
 
 PIKVM_PACKAGES_GIT_REF = d660118d169e96075c33fb7ab90e0bc492c4064e
 PIKVM_JANUS_GATEWAY_GIT_REF = c1435cf670d422648edab7dd5f188f09f9df7fd5
-PIKVM_USTREAMER_GIT_REF = de6fe0399bee4974d240e24f35560e2afb194d69
+PIKVM_USTREAMER_GIT_REF = 49980fd01e18088843311e6dd8e686b02250fa0e
 PIKVM_KVMD_GIT_REF = 8cc43887b430c5a982093afe3d14bd8b602c5fc2
 
 PIKVM_DEPENDS = $(BUILDDIR)/nanokvm-pro-package-prepare-stamp $(BUILDDIR)/python3-dev-install-stamp $(BUILDDIR)/tinyalsa-stamp
@@ -35,10 +35,11 @@ $(BUILDDIR)/pikvm-stamp: $(BUILDDIR)/middleware-package-stamp $(BUILDDIR)/pikvm-
 	@chroot /rootfs mount proc -t proc /proc
 	@mkdir -pv /rootfs/kvmapp/server/dl_lib/
 	@#rsync -avpPxH $(NANOKVM_PRO_PACKAGE_DIR)/kvmapp/server/dl_lib/ /rootfs/kvmapp/server/dl_lib/
-	@rsync -avpPxH $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/include/ /rootfs/opt/include/
 	@mkdir -p /rootfs/tmp/install/
 	@cp /output/$(CHIP_VENDOR)-middleware-$(BOARD)_*.deb /rootfs/tmp/install/
 	@chroot /rootfs bash -c 'dpkg -i /tmp/install/$(CHIP_VENDOR)-middleware-$(BOARD)_*.deb'
+	@cp /output/$(CHIP_VENDOR)-middleware-dev-$(BOARD)_*.deb /rootfs/tmp/install/
+	@chroot /rootfs bash -c 'dpkg -i /tmp/install/$(CHIP_VENDOR)-middleware-dev-$(BOARD)_*.deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libgpiod3_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libgpiod-dev_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/gpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
