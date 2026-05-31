@@ -223,6 +223,8 @@ for f in */.git ; do
     do_push_tags 'v[0-9]\.*'
   elif echo $d | grep -q -E '^edk2$' ; then
     do_push_tags 'edk2-stable2020*'
+ elif echo $d | grep -q -E '^ffmpeg$' ; then
+    do_push_tags 'n4.4*'
   elif echo $d | grep -q -E '^flatbuffers|^glog$' ; then
     do_push_tags 'v*'
   elif echo $d | grep -q -E '^harfbuzz$' ; then
