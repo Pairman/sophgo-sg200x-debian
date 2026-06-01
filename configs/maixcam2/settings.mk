@@ -30,6 +30,8 @@ IMAGE_ADDITIONS += "ethernet-builtin"
 #ifneq ("$(findstring kvm,$(VARIANT))","")
 #IMAGE_ADDITIONS += "nanokvm"
 IMAGE_ADDITIONS += "tinyalsa"
+IMAGE_ADDITIONS += "maixcdk"
+IMAGE_ADDITIONS += "maixapp"
 #IMAGE_ADDITIONS += "nanokvm-pro"
 #else
 #IMAGE_ADDITIONS += "maixapp"
