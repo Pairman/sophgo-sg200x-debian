@@ -20,9 +20,6 @@ PACKAGES += " python3-async-lru python3-dbus-next python3-zstandard"
 else
 IMAGE_ADDITIONS += "maixcam2-python3"
 endif
-ifneq ("$(findstring ubuntu,$(DEB_URL))","")
-PACKAGES += " ttyd"
-endif
 
 #IMAGE_ADDITIONS += "sensor-config"
 IMAGE_ADDITIONS += "device-key"
