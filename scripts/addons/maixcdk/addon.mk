@@ -28,6 +28,7 @@ MAIXCDK_PLATFORM ?= maixcam2
 # we only need ustreamer customized branch from pikvm to build maixcam_lib
 MAIXCAMLIB_BUILD_DIR = $(PIKVM_BUILD_DIR)/ustreamer
 MAIXCAMLIB_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/maixcam_lib
+MS_ASR_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/ms_asr/release.linux
 
 ifneq ("$(findstring pikvm,$(IMAGE_ADDITIONS))","")
 MAIXCAMLIB_DEPENDS = $(BUILDDIR)/pikvm-stamp
@@ -122,6 +123,8 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@sed -i s/'libdnvqe.so'/'libcvi_dnvqe.so'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i 's|$${mmf_lib_dir}/libcvi_dnvqe.so|\$${mmf_lib_dir}/libcvi_dnvqe.so $${mmf_lib_dir}/libcvi_ssp2.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i /'$${mmf_lib_dir}.libjson-c.so.5'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@# use ms_asr built from source
+	@rsync -avpPxH $(MS_ASR_OUT_DIR)/libms_asr_*.so $(MAIXCDK_BUILD_DIR)/components/nn/lib/
 	@# use openssl built from source
 	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz ]; then \
 		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/include/ && \
