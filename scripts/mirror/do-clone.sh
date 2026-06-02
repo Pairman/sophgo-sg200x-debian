@@ -96,6 +96,8 @@ git_subclone sdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/ireader-sdk -b maixcd
 git_subclone boringssl https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/boringssl -b main
 git_subclone pyca-cryptography https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/pyca-cryptography -b main
 git_subclone krb5 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/krb5 -b krb5-1.17
+git_subclone gost-engine https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/gost-engine -b master
+git_subclone wycheproof https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/wycheproof -b main
 
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/stb.git stb-src
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/googletest.git googletest-src
