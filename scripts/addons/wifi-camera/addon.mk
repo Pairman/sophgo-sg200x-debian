@@ -46,6 +46,5 @@ $(BUILDDIR)/wifi-camera-stamp: $(BUILDDIR)/middleware-package-stamp $(BUILDDIR)/
 	@cp -p $(BUILDDIR)/package/wifi-camera_$(WIFI_CAMERA_BV)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/
 	@cp -p /output/wifi-camera_$(WIFI_CAMERA_BV)_$(DEB_ARCH).deb /rootfs/tmp/install/
-	@echo " camera-server.service" >> /rootfs/tmp/install/systemd-enable
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf $(WIFI_CAMERA_WORK_DIR)
 	@touch $@
