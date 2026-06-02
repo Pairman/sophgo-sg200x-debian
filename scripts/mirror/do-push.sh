@@ -115,6 +115,11 @@ for f in */.git ; do
       do_pull_push $x $u $s
     done
     git checkout $b
+  elif echo $d | grep -q -E '^maixcdk-dl-pkgs$' ; then
+    for x in main full ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
   elif echo $d | grep -q -E '^middleware$' ; then
     for x in maix_mmf-cvisdk licheervnano ; do
       do_pull_push $x $u $s
@@ -220,6 +225,8 @@ for f in */.git ; do
     do_push_tags 'edk2-stable2020*'
   elif echo $d | grep -q -E '^flatbuffers|^glog$' ; then
     do_push_tags 'v*'
+  elif echo $d | grep -q -E '^harfbuzz$' ; then
+    do_push_tags '8.*'
   elif echo $d | grep -q -E '^kernel$|^linux' ; then
     do_push_tags 'v4.19*'
     do_push_tags 'v5.10*'
@@ -232,6 +239,7 @@ for f in */.git ; do
   elif echo $d | grep -q -E '^janus-gateway$' ; then
     do_push_tags 'v1.*'
   elif echo $d | grep -q -E '^kaldi-native-fbank$' ; then
+    do_push_tags 'v1.20*'
     do_push_tags 'v1.21*'
   elif echo $d | grep -q -E '^kissfft$' ; then
     do_push_tags '131*'
@@ -250,6 +258,8 @@ for f in */.git ; do
     do_push_tags 'v4\.*'
   elif echo $d | grep -q -E '^LicheeSG-Nano-Build$' ; then
     do_push_tags 'v*'
+  elif echo $d | grep -q -E '^marisa-trie$' ; then
+    do_push_tags 'v0.*'
   elif echo $d | grep -q -E '^maixcam-skeleton$' ; then
     do_push_tags 'v*'
   elif echo $d | grep -q -E '^meson$' ; then
@@ -260,6 +270,8 @@ for f in */.git ; do
     do_push_tags 'v2.*'
   elif echo $d | grep -q -E '^nanomsg$' ; then
     do_push_tags '[0-9]\.*'
+  elif echo $d | grep -q -E '^opencc$' ; then
+    do_push_tags 'ver.1.1.*'
   elif echo $d | grep -q -E '^opencv$' ; then
     do_push_tags '[0-9]\.*'
   elif echo $d | grep -q -E '^opensbi$' ; then
@@ -271,6 +283,10 @@ for f in */.git ; do
     do_push_tags 'v20*'
   elif echo $d | grep -q -E '^plog$' ; then
     do_push_tags '1\.1\.*'
+  elif echo $d | grep -q -E '^quirc$' ; then
+    do_push_tags 'v1.*'
+  elif echo $d | grep -q -E '^rapidjson$' ; then
+    do_push_tags 'v1.*'
   elif echo $d | grep -q -E '^riscv-gnu-toolchain$' ; then
     do_push_tags 'riscv*-10.?.*'
   elif echo $d | grep -q -E '^rtc-tools' ; then
@@ -286,6 +302,8 @@ for f in */.git ; do
     do_push_tags 'v2\.*'
   elif echo $d | grep -q -E '^u-boot$' ; then
     do_push_tags 'v20*'
+  elif echo $d | grep -q -E '^uchardet$' ; then
+    do_push_tags 'v0.0.*'
   elif echo $d | grep -q -E '^usrsctp' ; then
     do_push_tags 'v0\.9\.*'
   elif echo $d | grep -q -E '^ustreamer$' ; then
