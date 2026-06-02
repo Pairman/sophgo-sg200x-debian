@@ -384,6 +384,7 @@ $(BUILDDIR)/middleware-prepare-checkout-root-stamp: $(BUILDDIR)/middleware-prepa
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/opencv/opencv $(GIT_USER_URL)/opencv
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/opencv4.5/opencv $(GIT_USER_URL)/opencv
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/openssl/openssl $(GIT_USER_URL)/openssl
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/openssl3.0/openssl $(GIT_USER_URL)/openssl
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/sqlite/sqlite $(GIT_USER_URL)/sqlite
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/uv/uv $(GIT_USER_URL)/libuv
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/zlib/zlib $(GIT_USER_URL)/zlib
@@ -407,6 +408,12 @@ $(BUILDDIR)/middleware-prepare-checkout-openssl-stamp: $(BUILDDIR)/middleware-pr
 	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule set-url krb5 $(GIT_USER_URL)/krb5
 	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule set-url pyca-cryptography $(GIT_USER_URL)/pyca-cryptography
 	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule update --init --depth=1
+	@#cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url boringssl $(GIT_USER_URL)/boringssl
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url krb5 $(GIT_USER_URL)/krb5
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url pyca-cryptography $(GIT_USER_URL)/pyca-cryptography
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url gost-engine $(GIT_USER_URL)/gost-engine
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url wycheproof $(GIT_USER_URL)/wycheproof
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule update --init --depth=1
 	@touch $@
 
 $(BUILDDIR)/middleware-prepare-checkout-media-server-stamp: $(BUILDDIR)/middleware-prepare-checkout-root-stamp
