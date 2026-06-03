@@ -161,14 +161,25 @@ $(BUILDDIR)/maixcdk-compile-all-examples-stamp: $(BUILDDIR)/maixcdk-compile-stam
 	@cd $(MAIXCDK_BUILD_DIR)/test/test_examples/ && bash test_cases.sh $(MAIXCDK_PLATFORM)
 	@touch $@
 
-$(BUILDDIR)/maixcdk-stamp: $(BUILDDIR)/maixcdk-compile-stamp
+$(BUILDDIR)/maixcdk-distapps-stamp: $(BUILDDIR)/maixcdk-compile-stamp
 	@cp -p addons/maixcdk/distapps.sh $(MAIXCDK_BUILD_DIR)/
 	@cd $(MAIXCDK_BUILD_DIR)/ && chmod +x distapps.sh
 	@cd $(MAIXCDK_BUILD_DIR)/ && ./distapps.sh
 	@mkdir -p $(MAIXCDK_BUILD_DIR)/dist/usr/lib
+	@touch $@
+
+$(BUILDDIR)/maixcdk-distlibs-ax620e-stamp: $(BUILDDIR)/maixcdk-distapps-stamp
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/onnxruntime_srcs/$(MAIXCDK_PLATFORM)_onnxruntime_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/opencv/opencv4/opencv4_*/dl_lib/ $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/ffmpeg_srcs/ffmpeg_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+	@touch $@
+
+$(BUILDDIR)/maixcdk-distlibs-sg200x-stamp: $(BUILDDIR)/maixcdk-distapps-stamp
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/opencv4_install/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/ffmpeg_srcs/ffmpeg*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+	@touch $@
+
+$(BUILDDIR)/maixcdk-stamp: $(BUILDDIR)/maixcdk-compile-stamp $(BUILDDIR)/maixcdk-distapps-stamp $(BUILDDIR)/maixcdk-distlibs-$(CHIP_FAMILY)-stamp
 	@rsync -avpPxH $(MAIXCAMLIB_OUT_DIR)/libmaixcam_lib.so $(MAIXCDK_BUILD_DIR)/dist/maixapp/lib/
 	@cd $(MAIXCDK_BUILD_DIR)/ && rm -rf dl/extracted examples/*/build examples/*/dist projects/*/build projects/*/dist
 	@cd $(MAIXCDK_BUILD_DIR)/ && [ "$(GIT_REF)" = "develop" ] || rm -rf dl
