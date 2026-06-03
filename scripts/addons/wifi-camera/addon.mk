@@ -1,5 +1,7 @@
+ifneq ($(strip $(ION_SIZE)),0)
 ifneq ("$(findstring wifi-camera,$(IMAGE_ADDITIONS))$(findstring wifi-camera,$(PACKAGES))","")
 BSPFILTER += "wifi-camera"
+endif
 endif
 
 WIFI_CAMERA_VERSION ?= 1.0.0
