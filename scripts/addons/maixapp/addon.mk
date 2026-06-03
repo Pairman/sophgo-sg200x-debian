@@ -20,23 +20,31 @@ MAIXAPP_CLEANUP_LIBS = \
 	libxml2.so \
 	libz.so
 
+ifneq ("$(CHIP_FAMILY)","sg200x")
+# ax620e
+MAIXAPP_LIB_DEPENDS = $(BUILDDIR)/maixapp-ffmpeg-stamp $(BUILDDIR)/maixapp-onnxruntime-stamp $(BUILDDIR)/maixapp-opencv-stamp
+MAIXAPP_PACKAGE_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(MAIXAPP_PACKAGES))), ffmpeg-maixapp-$(BOARD), opencv-maixapp-$(BOARD)
+
+else
+# sg200x
+MAIXAPP_LIB_DEPENDS = $(BUILDDIR)/maixapp-ffmpeg-stamp $(BUILDDIR)/maixapp-opencv-stamp
+MAIXAPP_PACKAGE_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(MAIXAPP_PACKAGES))), ffmpeg-maixapp-$(BOARD), opencv-maixapp-$(BOARD)
+endif
+
 ifneq ("$(findstring maixcdk,$(IMAGE_ADDITIONS))","")
 MAIXAPP_GIT_DIR = $(MAIXCDK_BUILD_DIR)
 MAIXAPP_OUTPUT_DIR = $(MAIXCDK_BUILD_DIR)/dist
 
 MAIXAPP_DEPENDS = $(BUILDDIR)/maixcdk-stamp
-MAIXAPP_LIB_DEPENDS = $(BUILDDIR)/maixapp-ffmpeg-stamp $(BUILDDIR)/maixapp-onnxruntime-stamp $(BUILDDIR)/maixapp-opencv-stamp
-
-MAIXAPP_PACKAGE_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(MAIXAPP_PACKAGES))), ffmpeg-maixapp-$(BOARD), opencv-maixapp-$(BOARD)
 
 else
 MAIXAPP_GIT_DIR = $(BUILDDIR)/buildroot
 MAIXAPP_OUTPUT_DIR = $(BR_OUTPUT_DIR)/target
 
 MAIXAPP_DEPENDS = $(BUILDDIR)/buildroot-package-stamp
-MAIXAPP_LIB_DEPENDS = $(BUILDDIR)/maixapp-ffmpeg-stamp $(BUILDDIR)/maixapp-libjpeg-stamp $(BUILDDIR)/maixapp-opencv-stamp
 
-MAIXAPP_PACKAGE_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(MAIXAPP_PACKAGES))), ffmpeg-maixapp-$(BOARD), libjpeg-maixapp-$(BOARD), opencv-maixapp-$(BOARD)
+MAIXAPP_LIB_DEPENDS += $(BUILDDIR)/maixapp-libjpeg-stamp
+MAIXAPP_PACKAGE_DEPENDS += , libjpeg-maixapp-$(BOARD)
 endif
 
 $(BUILDDIR)/maixapp-version-stamp: $(MAIXAPP_DEPENDS)
