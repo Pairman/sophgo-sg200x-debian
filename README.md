@@ -208,6 +208,8 @@ Available debian packages:
  Startup scripts to initialize the on-board WiFi.
  - zram-config-licheervnano  
  Scripts to setup compressed ZRAM devices for overlayfs and zswap.
+ - wifi-camera  
+ Tools for frame capture, video recording and a HTTP server.
 
 The package names are depending on the board you are using (licheervnano, duo256 or duos) and the variant (kvm = NanoKVM, e = all others).
 For example if you want the kernel for Milk-V Duo256 the package is called linux-image-duo256-e.

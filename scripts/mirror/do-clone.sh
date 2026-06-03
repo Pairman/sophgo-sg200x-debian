@@ -135,6 +135,13 @@ git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/plog
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/usrsctp
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/zxing-cpp
 
+git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/harfbuzz
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/marisa-trie
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/OpenCC opencc
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/quirc
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/rapidjson
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/uchardet
+
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/tinyalsa
 
 git_clone -b nanokvmpro https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/kvmd
