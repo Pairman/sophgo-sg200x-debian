@@ -28,7 +28,7 @@ MAIXCDK_PLATFORM ?= maixcam2
 # we only need ustreamer customized branch from pikvm to build maixcam_lib
 MAIXCAMLIB_BUILD_DIR = $(PIKVM_BUILD_DIR)/ustreamer
 MAIXCAMLIB_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/maixcam_lib
-MS_ASR_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/ms_asr/release.linux
+MS_ASR_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/ms_asr
 
 ifneq ("$(findstring pikvm,$(IMAGE_ADDITIONS))","")
 MAIXCAMLIB_DEPENDS = $(BUILDDIR)/pikvm-stamp
@@ -52,6 +52,7 @@ MAIXCDK_OSS_TARBALL_DIR = $(BUILDDIR)/tpusdk/oss/oss_release_tarball/$(TPUSDK_VE
 
 MAIXCAMLIB_BUILD_DIR = $(BUILDDIR)/middleware/sample/test_mmf
 MAIXCAMLIB_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/maixcam_lib/release.linux
+MS_ASR_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/ms_asr/release.linux
 
 MAIXCAMLIB_DEPENDS = $(BUILDDIR)/middleware-package-stamp $(BUILDDIR)/tpusdk-package-stamp
 
