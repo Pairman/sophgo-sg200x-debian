@@ -111,6 +111,8 @@ Available debian packages:
  The kernel headers for the board.
  - linux-image-nanokvmpro-kvm  
  The kernel customized for the board.
+ - maixapp-maixcam2  
+ App(s) built with MaixCDK.
  - nanokvmpro  
  NanoKVM Server that provides the web interface to control your device.
  - pikvm  

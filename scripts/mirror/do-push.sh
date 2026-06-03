@@ -170,6 +170,11 @@ for f in */.git ; do
       do_pull_push $x $u $s
     done
     git checkout $b
+  elif echo $d | grep -q -E '^pyca-cryptography$' ; then
+    for x in 2.4.x 38.0.x main ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
   elif echo $d | grep -q -E '^ustreamer$' ; then
     for x in nanokvmpro kvm_vision ax_video ; do
       do_pull_push $x $u $s
@@ -223,6 +228,8 @@ for f in */.git ; do
     do_push_tags 'v[0-9]\.*'
   elif echo $d | grep -q -E '^edk2$' ; then
     do_push_tags 'edk2-stable2020*'
+ elif echo $d | grep -q -E '^ffmpeg$' ; then
+    do_push_tags 'n4.4*'
   elif echo $d | grep -q -E '^flatbuffers|^glog$' ; then
     do_push_tags 'v*'
   elif echo $d | grep -q -E '^harfbuzz$' ; then
@@ -283,6 +290,10 @@ for f in */.git ; do
     do_push_tags 'v20*'
   elif echo $d | grep -q -E '^plog$' ; then
     do_push_tags '1\.1\.*'
+  elif echo $d | grep -q -E '^pyca-cryptography' ; then
+    do_push_tags '2.3*'
+    do_push_tags '2.4*'
+    do_push_tags '38.0.*'
   elif echo $d | grep -q -E '^quirc$' ; then
     do_push_tags 'v1.*'
   elif echo $d | grep -q -E '^rapidjson$' ; then
