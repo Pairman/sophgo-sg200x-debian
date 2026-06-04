@@ -103,6 +103,19 @@ $(BUILDDIR)/maixcdk-prepare-ax620e-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
+	@# use alsa_lib built from source
+	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz ]; then \
+		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/include/ && \
+		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/lib/ && \
+		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib -xzf $(MAIXCDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz && \
+		sed -i 's|list(APPEND ADD_INCLUDE "include"|list(APPEND ADD_INCLUDE "alsa_lib/include"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|set(alsa_lib_include_dir "include")|set(alsa_lib_include_dir "alsa_lib/include")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|set(alsa_lib_dir "lib")|set(alsa_lib_dir "alsa_lib/lib")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|$${alsa_lib_dir}/$(MAIXCDK_PLATFORM)|$${alsa_lib_dir}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|lib/$(MAIXCDK_PLATFORM)|alsa_lib/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/component.py ; \
+	fi
 	# use cvi_tpu built from source
 	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/cvi_tpu_lib
 	@rsync -avpPxH $(BUILDDIR)/tpusdk/install/soc_$(TPUSDK_BOARD_LINK)/tpu_$(TPUSDK_VER)/cvitek_tpu_sdk/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/cvi_tpu_lib/
