@@ -134,6 +134,10 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 		done && \
 		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ; \
 	fi
+	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz -a -e $(MAIXCDK_OSS_TARBALL_DIR)/zlib.tar.gz ]; then \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg --wildcards -xzf $(MAIXCDK_OSS_TARBALL_DIR)/zlib.tar.gz 'lib/libz.so*' && \
+		sed -i 's|                                $${src_path}/lib/libswscale.so|                                $${src_path}/lib/libswscale.so\n                                $${src_path}/lib/libz.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt ; \
+	fi
 	@# use middleware libs from rootfs
 	@sed -i 's|$${middleware_src_path}/v2/lib|/rootfs$(MIDDLEWARE_TARGET_DIR)/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i /'$${mmf_lib_dir}.3rd.libcli.so'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
