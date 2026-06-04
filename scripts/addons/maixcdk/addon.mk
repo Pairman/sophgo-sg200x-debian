@@ -129,6 +129,9 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg && \
 		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg -xzf $(MAIXCDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz && \
 		sed -i 's|set(src_path "$${ffmpeg_unzip_path}/ffmpeg")|set(src_path "ffmpeg")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt && \
+		for l in avdevice avfilter avresample postproc ; do \
+			[ -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg/lib/lib$${l}.so ] || sed -i /lib$${l}.so/d /build/MaixCDK/components/3rd_party/FFmpeg/CMakeLists.txt ; \
+		done && \
 		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ; \
 	fi
 	@# use middleware libs from rootfs
