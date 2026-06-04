@@ -101,6 +101,10 @@ BUILDROOT_ENV = CROSS_COMPILE_KERNEL=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX
 CROSS_COMPILE_SDK=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
+ifeq ($(findstring maixcdk,$(IMAGE_ADDITIONS)),)
+BR_ENABLE_MAIXAPP = $(findstring maixapp,$(IMAGE_ADDITIONS))
+endif
+
 TOOLCHAIN_URL_ARM ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g' | sed 's|/linaro|/arm/gnu|g')
 
 FSBL_MAKE_OPTS = $(UBOOT_MAKE_OPTS) \
@@ -449,6 +453,7 @@ $(BUILDDIR)/middleware-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/common/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/sample/common/Makefile
+	[ "X$(findstring maixcdk,$(IMAGE_ADDITIONS))" = "X" ] || sed -i s/TRD_BUILD_OPTIONAL_MODULE/TRD_BUILD_TPUSDK_MODULE/g $(BUILDDIR)/middleware/3rdparty/ffmpeg/Makefile
 	@touch $@
 
 $(BUILDDIR)/middleware-prepare-configure-stamp: $(BUILDDIR)/middleware-prepare-patch-stamp
@@ -564,7 +569,7 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-arm/toolchain-external-arm-arm.mk
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
-	@if [ "X$(findstring kvm,$(VARIANT))$(findstring maixapp,$(IMAGE_ADDITIONS))" = "X" ]; then \
+	@if [ "X$(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_CCACHE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_CA_CERTIFICATES/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_LIBOPENSSL/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -573,7 +578,7 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 		sed -i /BR2_PACKAGE_HOST_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_MAIX_CDK/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
-	@if [ "X$(findstring maixapp,$(IMAGE_ADDITIONS))" = "X" ]; then \
+	@if [ "X$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_PACKAGE_MPG123/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_LIBWEBSOCKETS/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_NANOMSG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
