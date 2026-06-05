@@ -160,6 +160,7 @@ $(info $(blue)ION Size: $(ION_SIZE)M$(reset))
 $(info $(blue)Default Panel: $(PANEL_TUNING_DEFAULT)$(reset))
 $(info $(blue)Image Addons: $(IMAGE_ADDITIONS)$(reset))
 $(info $(blue)Packages: $(_PACKAGES)$(reset))
+$(info $(blue)Development Packages: $(_DEV_PACKAGES)$(reset))
 
 NPROCS := $(shell nproc)
 
