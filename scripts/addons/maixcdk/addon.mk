@@ -66,13 +66,7 @@ $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@touch $@
 endif
 
-$(BUILDDIR)/maixtool-stamp:
-	@# install maixtool on host
-	@apt-get install -y python3-flask python3-netifaces python3-pillow python3-yaml python3-progress python3-qrcode python3-requests python3-pip python3-setuptools
-	@pip install --break-system-packages maixtool
-	@touch $@
-
-$(BUILDDIR)/maixcdk-prepare-checkout-stamp: $(BUILDDIR)/maixcamlib-stamp $(BUILDDIR)/maixtool-stamp
+$(BUILDDIR)/maixcdk-prepare-checkout-stamp: $(BUILDDIR)/maixcamlib-stamp $(BUILDDIR)/python3-maixtool-stamp
 	@cd $(BUILDDIR) && git clone --shallow-since=2024-08-18 $(GIT_USER_URL)/MaixCDK
 	@cd $(MAIXCDK_BUILD_DIR)/ && git checkout $(MAIXCDK_GIT_REF)
 	@cd $(MAIXCDK_BUILD_DIR)/dl && git clone -b full --depth 1 $(GIT_USER_URL)/maixcdk-dl-pkgs pkgs
