@@ -38,10 +38,10 @@ endif
 
 $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@# rebuild maixcam_lib with cross compile toolchain
-	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libsamplerate.so* /rootfs$(MIDDLEWARE_TARGET_DIR)/lib/
-	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libtinyalsa.* /rootfs$(MIDDLEWARE_TARGET_DIR)/lib/
+	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libsamplerate.so* $(MIDDLEWARE_OUT_DIR)/lib/
+	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libtinyalsa.* $(MIDDLEWARE_OUT_DIR)/lib/
 	@cd $(MAIXCAMLIB_BUILD_DIR) && rm -rf maixcam_lib/build maixcam_lib/*.so*
-	@cd $(MAIXCAMLIB_BUILD_DIR) && PATH="$(SDK_CROSS_COMPILE_PATH)/bin:$$PATH" make -C maixcam_lib CC=$(SDK_CROSS_COMPILE_PREFIX)gcc CXX=$(SDK_CROSS_COMPILE_PREFIX)g++ CFLAGS="-O3 -I/rootfs$(MIDDLEWARE_TARGET_DIR)/include" LDFLAGS="-L/rootfs$(MIDDLEWARE_TARGET_DIR)/lib"
+	@cd $(MAIXCAMLIB_BUILD_DIR) && PATH="$(SDK_CROSS_COMPILE_PATH)/bin:$$PATH" make -C maixcam_lib CC=$(SDK_CROSS_COMPILE_PREFIX)gcc CXX=$(SDK_CROSS_COMPILE_PREFIX)g++ CFLAGS="-O3 -I$(MIDDLEWARE_OUT_DIR)/include" LDFLAGS="-L$(MIDDLEWARE_OUT_DIR)/lib"
 	@touch $@
 
 else
@@ -88,7 +88,7 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/component.py
 	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/CMakeLists.txt
 	@# use msp libs from rootfs
-	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "/rootfs$(MIDDLEWARE_TARGET_DIR)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
+	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "$(MIDDLEWARE_OUT_DIR)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
 	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/component.py
 	@# update download urls if required
 	@[ ! -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ] || sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py
@@ -139,7 +139,7 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 		sed -i 's|                                $${src_path}/lib/libswscale.so|                                $${src_path}/lib/libswscale.so\n                                $${src_path}/lib/libz.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt ; \
 	fi
 	@# use middleware libs from rootfs
-	@sed -i 's|$${middleware_src_path}/v2/lib|/rootfs$(MIDDLEWARE_TARGET_DIR)/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@sed -i 's|$${middleware_src_path}/v2/lib|$(MIDDLEWARE_OUT_DIR)/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i /'$${mmf_lib_dir}.3rd.libcli.so'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i s/'libdnvqe.so'/'libcvi_dnvqe.so'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i 's|$${mmf_lib_dir}/libcvi_dnvqe.so|\$${mmf_lib_dir}/libcvi_dnvqe.so $${mmf_lib_dir}/libcvi_ssp2.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
