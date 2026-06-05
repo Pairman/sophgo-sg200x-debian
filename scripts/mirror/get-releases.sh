@@ -4,7 +4,36 @@ d=git-archive
 [ -e $d ] || mkdir $d
 r=$d/releases/
 
-scriptdir=$(dirname $0) ; pushd $scriptdir ; scriptdir=$(pwd) ; popd >/dev/null
+scriptdir=$(dirname $0) ; pushd $scriptdir >/dev/null ; scriptdir=$(pwd) ; popd >/dev/null
+
+get_pip()
+{
+  repo=$1
+  tag=$2
+
+   if release=$(curl -fqs https://pypi.org/pypi/${repo}/json | jq -r '.releases."'${tag}'"')
+    then
+      #tag="$(echo "$release" | jq -r '.tag_name')"
+      rel_set=$(echo ${repo} | tr / -)-releases-${tag}
+      rel_sha256=${scriptdir}/../../scripts/addons/python3-${repo}/${repo}-${tag}.sha256
+      rel_files="$(echo "$release" | jq -r '.[] | select(.filename | match(".tar.gz$|none-any.whl$")) | .url')"
+      echo "Parsing repo $repo at $tag"
+      for rel_file in $rel_files ; do
+      if [ -n "$rel_file" ]
+      then
+        echo "Getting ${rel_file}"
+        mkdir -p "${r}/pythonhosted"
+        pushd "${r}/pythonhosted" >/dev/null
+        wget -q -N "${rel_file}"
+        popd >/dev/null
+      fi
+      done
+      pushd "${r}/pythonhosted" >/dev/null
+      [   -e $rel_sha256 ] || echo "WARNING: $rel_sha256 not found."
+      [ ! -e $rel_sha256 ] || sha256sum -c $rel_sha256
+      popd >/dev/null
+   fi
+}
 
 get_rel()
 {
@@ -61,6 +90,15 @@ get_tag()
    fi
 }
 
+for f in scripts/addons/python3-*/addon.mk ; do
+  d=`dirname $f`
+  a=`basename $d`
+  b=`echo $a | cut -d '-' -f 2-`
+  v=`echo $a | tr a-z- A-Z_`_VERSION
+  t=$(grep '^'$v $f | cut -d '=' -f 2- | tr -d '\t ')
+  [ "X$t" = "X" ] || get_pip $b $t
+done
+
 get_tag scpcom/ade v0.1.1f-gcc-13
 get_tag opencv/ade v0.1.1f
 get_tag opencv/ade v0.1.2a
@@ -75,6 +113,7 @@ get_tag opencv/opencv 4.8.0
 get_tag opencv/opencv 4.9.0
 get_tag opencv/opencv 4.10.0
 get_tag opencv/opencv 4.11.0
+
 get_rel sipeed/MaixCDK v0.0.0
 
 echo OK
