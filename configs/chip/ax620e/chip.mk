@@ -61,6 +61,7 @@ FSBL_TARGETS += $(patsubst %,$(BUILDDIR)/fsbl-%.package-stamp,$(PANEL_TUNING_EXT
 endif
 endif
 
+MIDDLEWARE_OUT_DIR=$(BUILDDIR)/middleware/install/system/usr
 MIDDLEWARE_TARGET_DIR=/opt
 
 BSPDEPENDS = $(CHIP_VENDOR)-middleware-$(BOARD)\
@@ -287,8 +288,9 @@ $(BUILDDIR)/middleware-prepare-configure-stamp: $(BUILDDIR)/middleware-prepare-p
 
 $(BUILDDIR)/middleware-compile-stamp: $(BUILDDIR)/middleware-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building Middleware for $(BOARD)$(END_COLOUR)"
-	@mkdir -pv $(BUILDDIR)/middleware/install/system/usr/lib/
-	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/lib/*.so* $(BUILDDIR)/middleware/install/system/usr/lib/
+	@mkdir -pv $(MIDDLEWARE_OUT_DIR)/lib/
+	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/lib/*.so* $(MIDDLEWARE_OUT_DIR)/lib/
+	@rsync -avpPxH $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/include/ $(BUILDDIR)/middleware/install/system/usr/include/
 	@touch $@
 
 $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
@@ -301,7 +303,8 @@ $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
 	@mkdir -p $(MIDDLEWARE_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_PACKAGE_DIR)/
 	@mkdir -pv $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
-	@rsync -avpPxH $(BUILDDIR)/middleware/install/system/usr/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rm -rf $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_PACKAGE_NAME)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
@@ -316,7 +319,7 @@ $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
 	@mkdir -p $(MIDDLEWARE_DEV_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_DEV_PACKAGE_DIR)/
 	@mkdir -pv $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
-	@rsync -avpPxH $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/include/ $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/include/ $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_DEV_PACKAGE_NAME)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
