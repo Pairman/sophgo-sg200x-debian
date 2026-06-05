@@ -5,8 +5,8 @@ MIDDLEWAREVERSION=2024.11.20
 CROSS_COMPILE_64 = aarch64-none-linux-gnu-
 CROSS_COMPILE_32 = arm-none-linux-gnueabihf-
 
-CROSS_COMPILE_PATH_64 = /host-tools/gcc/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu
-CROSS_COMPILE_PATH_32 = /host-tools/gcc/gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf
+CROSS_COMPILE_PATH_64 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-aarch64-none-linux-gnu
+CROSS_COMPILE_PATH_32 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-linux-gnueabihf
 
 ifeq ($(SDK_VER),64bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
@@ -108,10 +108,10 @@ endef
 
 $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@echo "$(COLOUR_GREEN)Patching Toolchain for $(BOARD)$(END_COLOUR)"
-	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-a-toolchains.sh
+	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-toolchains.sh
 	@if [ "$(UBOOT_ARCH)" = "arm" ]; then \
 		rm -rf /host-tools/gcc/riscv64-*/ && \
-		cd / && /builder/replace-all-arm-a-toolchains.sh && \
+		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
 	fi
 	@#cd / && /builder/fix-thead-glibc-toolchain.sh
