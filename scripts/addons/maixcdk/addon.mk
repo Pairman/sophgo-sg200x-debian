@@ -197,7 +197,8 @@ $(BUILDDIR)/maixcdk-distlibs-ax620e-stamp: $(BUILDDIR)/maixcdk-distapps-stamp
 
 $(BUILDDIR)/maixcdk-distlibs-sg200x-stamp: $(BUILDDIR)/maixcdk-distapps-stamp
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/opencv4_install/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
-	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/ffmpeg_srcs/ffmpeg*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/ || \
+		rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/ffmpeg_srcs/ffmpeg_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
 	@touch $@
 
 $(BUILDDIR)/maixcdk-stamp: $(BUILDDIR)/maixcdk-compile-stamp $(BUILDDIR)/maixcdk-distapps-stamp $(BUILDDIR)/maixcdk-distlibs-$(CHIP_FAMILY)-stamp
