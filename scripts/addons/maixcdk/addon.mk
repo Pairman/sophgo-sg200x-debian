@@ -171,8 +171,23 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@[ "X$(findstring musl,$(SDK_VER))" != "X" ] || sed -i s/'-mabi=lp64d$$'/'-mabi=lp64d -ldl'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@touch $@
 
-$(BUILDDIR)/maixcdk-compile-stamp: $(BUILDDIR)/maixcdk-prepare-$(CHIP_FAMILY)-stamp
+$(BUILDDIR)/maixcdk-compile-one-example-stamp: $(BUILDDIR)/maixcdk-prepare-$(CHIP_FAMILY)-stamp
 	@cd $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/ && maixcdk build -p $(MAIXCDK_PLATFORM)
+	@# build datachannel only once
+	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/include
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/libdatachannel_srcs/libdatachannel-*/include/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/include/
+	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/datachannel/libdatachannel.so* $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)/
+	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/datachannel/CMakeLists.txt
+	@# build opencv only once
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/opencv4_install/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/opencv4_lib_$(MAIXCDK_PLATFORM)/
+	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/opencv/CMakeLists.txt
+	@sed -i 's|set(opencv_lib_dir "$${DL_EXTRACTED_PATH}/opencv/opencv4/opencv4_lib_.*_$${version_str}")|set(opencv_lib_dir "$${CMAKE_CURRENT_LIST_DIR}/opencv4_lib_$(MAIXCDK_PLATFORM)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
+	@sed -i 's|$${opencv_lib_dir}/dl_lib|$${opencv_lib_dir}/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
+	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
+	@touch $@
+
+$(BUILDDIR)/maixcdk-compile-stamp: $(BUILDDIR)/maixcdk-compile-one-example-stamp
 	@cd $(MAIXCDK_BUILD_DIR)/projects/ && bash build_all.sh $(MAIXCDK_PLATFORM)
 	@touch $@
 
