@@ -5,8 +5,8 @@ MIDDLEWAREVERSION=2024.11.20
 CROSS_COMPILE_64 = aarch64-none-linux-gnu-
 CROSS_COMPILE_32 = arm-none-linux-gnueabihf-
 
-CROSS_COMPILE_PATH_64 = /host-tools/gcc/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu
-CROSS_COMPILE_PATH_32 = /host-tools/gcc/gcc-arm-9.2-2019.12-x86_64-arm-none-linux-gnueabihf
+CROSS_COMPILE_PATH_64 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-aarch64-none-linux-gnu
+CROSS_COMPILE_PATH_32 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-linux-gnueabihf
 
 ifeq ($(SDK_VER),64bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
@@ -61,6 +61,7 @@ FSBL_TARGETS += $(patsubst %,$(BUILDDIR)/fsbl-%.package-stamp,$(PANEL_TUNING_EXT
 endif
 endif
 
+MIDDLEWARE_OUT_DIR=$(BUILDDIR)/middleware/install/system/usr
 MIDDLEWARE_TARGET_DIR=/opt
 
 BSPDEPENDS = $(CHIP_VENDOR)-middleware-$(BOARD)\
@@ -107,10 +108,10 @@ endef
 
 $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@echo "$(COLOUR_GREEN)Patching Toolchain for $(BOARD)$(END_COLOUR)"
-	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-a-toolchains.sh
+	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-toolchains.sh
 	@if [ "$(UBOOT_ARCH)" = "arm" ]; then \
 		rm -rf /host-tools/gcc/riscv64-*/ && \
-		cd / && /builder/replace-all-arm-a-toolchains.sh && \
+		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
 	fi
 	@#cd / && /builder/fix-thead-glibc-toolchain.sh
@@ -287,8 +288,9 @@ $(BUILDDIR)/middleware-prepare-configure-stamp: $(BUILDDIR)/middleware-prepare-p
 
 $(BUILDDIR)/middleware-compile-stamp: $(BUILDDIR)/middleware-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building Middleware for $(BOARD)$(END_COLOUR)"
-	@mkdir -pv $(BUILDDIR)/middleware/install/system/usr/lib/
-	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/lib/*.so* $(BUILDDIR)/middleware/install/system/usr/lib/
+	@mkdir -pv $(MIDDLEWARE_OUT_DIR)/lib/
+	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/lib/*.so* $(MIDDLEWARE_OUT_DIR)/lib/
+	@rsync -avpPxH $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/include/ $(BUILDDIR)/middleware/install/system/usr/include/
 	@touch $@
 
 $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
@@ -301,7 +303,8 @@ $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
 	@mkdir -p $(MIDDLEWARE_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_PACKAGE_DIR)/
 	@mkdir -pv $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
-	@rsync -avpPxH $(BUILDDIR)/middleware/install/system/usr/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rm -rf $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_PACKAGE_NAME)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
@@ -316,7 +319,7 @@ $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
 	@mkdir -p $(MIDDLEWARE_DEV_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_DEV_PACKAGE_DIR)/
 	@mkdir -pv $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
-	@rsync -avpPxH $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/include/ $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/include/ $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_DEV_PACKAGE_NAME)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control

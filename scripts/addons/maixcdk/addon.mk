@@ -21,6 +21,12 @@ else
 $(error $(red)DEB_ARCH is invalid$(reset))
 endif
 
+ifneq ($(SDK_TARGET_LDFLAGS),)
+MAIXCDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS)
+else
+MAIXCDK_TARGET_LDFLAGS = ""
+endif
+
 ifneq ("$(CHIP_FAMILY)","sg200x")
 # ax620e
 MAIXCDK_PLATFORM ?= maixcam2
@@ -38,10 +44,10 @@ endif
 
 $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@# rebuild maixcam_lib with cross compile toolchain
-	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libsamplerate.so* /rootfs$(MIDDLEWARE_TARGET_DIR)/lib/
-	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libtinyalsa.* /rootfs$(MIDDLEWARE_TARGET_DIR)/lib/
+	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libsamplerate.so* $(MIDDLEWARE_OUT_DIR)/lib/
+	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libtinyalsa.* $(MIDDLEWARE_OUT_DIR)/lib/
 	@cd $(MAIXCAMLIB_BUILD_DIR) && rm -rf maixcam_lib/build maixcam_lib/*.so*
-	@cd $(MAIXCAMLIB_BUILD_DIR) && PATH="$(SDK_CROSS_COMPILE_PATH)/bin:$$PATH" make -C maixcam_lib CC=$(SDK_CROSS_COMPILE_PREFIX)gcc CXX=$(SDK_CROSS_COMPILE_PREFIX)g++ CFLAGS="-O3 -I/rootfs$(MIDDLEWARE_TARGET_DIR)/include" LDFLAGS="-L/rootfs$(MIDDLEWARE_TARGET_DIR)/lib"
+	@cd $(MAIXCAMLIB_BUILD_DIR) && PATH="$(SDK_CROSS_COMPILE_PATH)/bin:$$PATH" make -C maixcam_lib CC=$(SDK_CROSS_COMPILE_PREFIX)gcc CXX=$(SDK_CROSS_COMPILE_PREFIX)g++ CFLAGS="-O3 -I$(MIDDLEWARE_OUT_DIR)/include" LDFLAGS="-L$(MIDDLEWARE_OUT_DIR)/lib"
 	@touch $@
 
 else
@@ -60,13 +66,7 @@ $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@touch $@
 endif
 
-$(BUILDDIR)/maixtool-stamp:
-	@# install maixtool on host
-	@apt-get install -y python3-flask python3-netifaces python3-pillow python3-yaml python3-progress python3-qrcode python3-requests python3-pip python3-setuptools
-	@pip install --break-system-packages maixtool
-	@touch $@
-
-$(BUILDDIR)/maixcdk-prepare-checkout-stamp: $(BUILDDIR)/maixcamlib-stamp $(BUILDDIR)/maixtool-stamp
+$(BUILDDIR)/maixcdk-prepare-checkout-stamp: $(BUILDDIR)/maixcamlib-stamp $(BUILDDIR)/python3-maixtool-stamp
 	@cd $(BUILDDIR) && git clone --shallow-since=2024-08-18 $(GIT_USER_URL)/MaixCDK
 	@cd $(MAIXCDK_BUILD_DIR)/ && git checkout $(MAIXCDK_GIT_REF)
 	@cd $(MAIXCDK_BUILD_DIR)/dl && git clone -b full --depth 1 $(GIT_USER_URL)/maixcdk-dl-pkgs pkgs
@@ -87,9 +87,13 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@# build harfbuzz from source
 	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/component.py
 	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/CMakeLists.txt
-	@# use msp libs from rootfs
-	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "/rootfs$(MIDDLEWARE_TARGET_DIR)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
+	@# use msp libs from sdk
+	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "$(MIDDLEWARE_OUT_DIR)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
+	@sed -i 's|$${msp_local_path}/out/.*_glibc/include|$(MIDDLEWARE_OUT_DIR)/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
 	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/component.py
+	@# build opencv from source
+	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
+	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
 	@# update download urls if required
 	@[ ! -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ] || sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py
 	@sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
@@ -97,12 +101,34 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@sed -i 's|https://github.com/opencv/ade/archive|$(GIT_RELEASES_URL)/opencv/ade/archive|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
 	@sed -i 's|https://github.com/opencv/opencv/archive|$(GIT_RELEASES_URL)/opencv/opencv/archive|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
 	@[ "X$(MAIXCDK_TOOLCHAIN_URL)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(MAIXCDK_TOOLCHAIN_URL)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@# use cross compile toolchain
+	@sed -i s/'^    url: .*'/'    url:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i s/'^    sha256sum: .*'/'    sha256sum:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i s/'^    filename: .*'/'    filename:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i s/'^    path: .*'/'    path:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i 's|^    bin_path: .*|    bin_path: '$(SDK_CROSS_COMPILE_PATH)/bin'|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i 's|^    prefix: .*|    prefix: '$(SDK_CROSS_COMPILE_PREFIX)'|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i 's|^    c_flags: .*|    c_flags: $(MAIXCDK_TARGET_LDFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i 's|^    cxx_flags: .*|    cxx_flags: $(MAIXCDK_TARGET_LDFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-ax620e-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
+	@# use alsa_lib built from source
+	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz ]; then \
+		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/include/ && \
+		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/lib/ && \
+		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib -xzf $(MAIXCDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz && \
+		sed -i 's|list(APPEND ADD_INCLUDE "include"|list(APPEND ADD_INCLUDE "alsa_lib/include"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|set(alsa_lib_include_dir "include")|set(alsa_lib_include_dir "alsa_lib/include")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|set(alsa_lib_dir "lib")|set(alsa_lib_dir "alsa_lib/lib")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|$${alsa_lib_dir}/$(MAIXCDK_PLATFORM)|$${alsa_lib_dir}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|lib/$(MAIXCDK_PLATFORM)|alsa_lib/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/component.py ; \
+	fi
 	# use cvi_tpu built from source
 	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/cvi_tpu_lib
 	@rsync -avpPxH $(BUILDDIR)/tpusdk/install/soc_$(TPUSDK_BOARD_LINK)/tpu_$(TPUSDK_VER)/cvitek_tpu_sdk/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/cvi_tpu_lib/
@@ -116,14 +142,29 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg && \
 		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg -xzf $(MAIXCDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz && \
 		sed -i 's|set(src_path "$${ffmpeg_unzip_path}/ffmpeg")|set(src_path "ffmpeg")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt && \
+		for l in avdevice avfilter avresample postproc ; do \
+			[ -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg/lib/lib$${l}.so ] || sed -i /lib$${l}.so/d /build/MaixCDK/components/3rd_party/FFmpeg/CMakeLists.txt ; \
+		done && \
 		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ; \
 	fi
-	@# use middleware libs from rootfs
-	@sed -i 's|$${middleware_src_path}/v2/lib|/rootfs$(MIDDLEWARE_TARGET_DIR)/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz -a -e $(MAIXCDK_OSS_TARBALL_DIR)/zlib.tar.gz ]; then \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg --wildcards -xzf $(MAIXCDK_OSS_TARBALL_DIR)/zlib.tar.gz 'lib/libz.so*' && \
+		sed -i 's|                                $${src_path}/lib/libswscale.so|                                $${src_path}/lib/libswscale.so\n                                $${src_path}/lib/libz.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt ; \
+	fi
+	@# use middleware libs from sdk
+	@sed -i 's|$${middleware_src_path}/v2/lib|$(MIDDLEWARE_OUT_DIR)/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@sed -i 's|$${middleware_src_path}/v2/include|$(MIDDLEWARE_OUT_DIR)/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@sed -i 's|$${middleware_src_path}/v2/uapi|$(MIDDLEWARE_OUT_DIR)/include/linux|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@# small changes related to weekly rls 2024.10.14
 	@sed -i /'$${mmf_lib_dir}.3rd.libcli.so'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i s/'libdnvqe.so'/'libcvi_dnvqe.so'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i 's|$${mmf_lib_dir}/libcvi_dnvqe.so|\$${mmf_lib_dir}/libcvi_dnvqe.so $${mmf_lib_dir}/libcvi_ssp2.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i /'$${mmf_lib_dir}.libjson-c.so.5'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@sed -i 's|^list.APPEND ADD_INCLUDE $${middleware_include_dir}.|list(APPEND ADD_INCLUDE $${middleware_include_dir})\n\nlist(APPEND ADD_DEFINITIONS -D__$(SDK_CHIP)__)|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@sed -i /'#include "cvi_comm_ao.h"'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_comm.h
+	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/component/isp/sensor/sg200x/gcore_gc02m1/gc02m1_cmos.c
+	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_common_sensor.c
+	@sed -i s/'#include "mipi_tx.h"'/'#include "cvi_mipi_tx.h"'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_common_vo.c
 	@# use ms_asr built from source
 	@rsync -avpPxH $(MS_ASR_OUT_DIR)/libms_asr_*.so $(MAIXCDK_BUILD_DIR)/components/nn/lib/
 	@# use openssl built from source
@@ -136,22 +177,27 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 		sed -i 's|so/$(MAIXCDK_PLATFORM)|openssl/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/CMakeLists.txt && \
 		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/component.py ; \
 	fi
-	@# build opencv from source
-	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
-	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
-	@# use cross compile toolchain
-	@sed -i s/'^    url: .*'/'    url:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i s/'^    sha256sum: .*'/'    sha256sum:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i s/'^    filename: .*'/'    filename:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i s/'^    path: .*'/'    path:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i 's|^    bin_path: .*|    bin_path: '$(SDK_CROSS_COMPILE_PATH)/bin'|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i 's|^    prefix: .*|    prefix: '$(SDK_CROSS_COMPILE_PREFIX)'|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i s/rv64imafdcv0p7xthead/rv64imafdc/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@# add -ldl for glibc cross compile toolchain
 	@[ "X$(findstring musl,$(SDK_VER))" != "X" ] || sed -i s/'-mabi=lp64d$$'/'-mabi=lp64d -ldl'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@touch $@
 
-$(BUILDDIR)/maixcdk-compile-stamp: $(BUILDDIR)/maixcdk-prepare-$(CHIP_FAMILY)-stamp
+$(BUILDDIR)/maixcdk-compile-one-example-stamp: $(BUILDDIR)/maixcdk-prepare-$(CHIP_FAMILY)-stamp
 	@cd $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/ && maixcdk build -p $(MAIXCDK_PLATFORM)
+	@# build datachannel only once
+	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/include
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/libdatachannel_srcs/libdatachannel-*/include/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/include/
+	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/datachannel/libdatachannel.so* $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)/
+	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/datachannel/CMakeLists.txt
+	@# build opencv only once
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/opencv4_install/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/opencv4_lib_$(MAIXCDK_PLATFORM)/
+	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/opencv/CMakeLists.txt
+	@sed -i 's|set(opencv_lib_dir "$${DL_EXTRACTED_PATH}/opencv/opencv4/opencv4_lib_.*_$${version_str}")|set(opencv_lib_dir "$${CMAKE_CURRENT_LIST_DIR}/opencv4_lib_$(MAIXCDK_PLATFORM)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
+	@sed -i 's|$${opencv_lib_dir}/dl_lib|$${opencv_lib_dir}/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
+	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
+	@touch $@
+
+$(BUILDDIR)/maixcdk-compile-stamp: $(BUILDDIR)/maixcdk-compile-one-example-stamp
 	@cd $(MAIXCDK_BUILD_DIR)/projects/ && bash build_all.sh $(MAIXCDK_PLATFORM)
 	@touch $@
 
@@ -168,15 +214,18 @@ $(BUILDDIR)/maixcdk-distapps-stamp: $(BUILDDIR)/maixcdk-compile-stamp
 	@mkdir -p $(MAIXCDK_BUILD_DIR)/dist/usr/lib
 	@touch $@
 
-$(BUILDDIR)/maixcdk-distlibs-ax620e-stamp: $(BUILDDIR)/maixcdk-distapps-stamp
-	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/onnxruntime_srcs/$(MAIXCDK_PLATFORM)_onnxruntime_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
-	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/opencv/opencv4/opencv4_*/dl_lib/ $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
-	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/ffmpeg_srcs/ffmpeg_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+$(BUILDDIR)/maixcdk-distlibs-stamp: $(BUILDDIR)/maixcdk-distapps-stamp
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/opencv4_install/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/ || \
+		rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/opencv/opencv4/opencv4_*/dl_lib/ $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/ || \
+		rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/ffmpeg_srcs/ffmpeg_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
 	@touch $@
 
-$(BUILDDIR)/maixcdk-distlibs-sg200x-stamp: $(BUILDDIR)/maixcdk-distapps-stamp
-	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/opencv4_install/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
-	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/ffmpeg_srcs/ffmpeg*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+$(BUILDDIR)/maixcdk-distlibs-ax620e-stamp: $(BUILDDIR)/maixcdk-distlibs-stamp
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/onnxruntime_srcs/$(MAIXCDK_PLATFORM)_onnxruntime_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+	@touch $@
+
+$(BUILDDIR)/maixcdk-distlibs-sg200x-stamp: $(BUILDDIR)/maixcdk-distlibs-stamp
 	@touch $@
 
 $(BUILDDIR)/maixcdk-stamp: $(BUILDDIR)/maixcdk-compile-stamp $(BUILDDIR)/maixcdk-distapps-stamp $(BUILDDIR)/maixcdk-distlibs-$(CHIP_FAMILY)-stamp
