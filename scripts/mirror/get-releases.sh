@@ -15,22 +15,28 @@ get_pip()
     then
       #tag="$(echo "$release" | jq -r '.tag_name')"
       rel_set=$(echo ${repo} | tr / -)-releases-${tag}
-      rel_sha256=${scriptdir}/../../scripts/addons/python3-${repo}/${repo}-${tag}.sha256
+      gen_sha256="${r}/pythonhosted"/${repo}-${tag}.sha256
+      rel_sha256=${scriptdir}/../addons/python3-${repo}/${repo}-${tag}.sha256
       rel_files="$(echo "$release" | jq -r '.[] | select(.filename | match(".tar.gz$|none-any.whl$")) | .url')"
       echo "Parsing repo $repo at $tag"
+      rm -f $gen_sha256
       for rel_file in $rel_files ; do
       if [ -n "$rel_file" ]
       then
+        rel_hash=$(echo "$release" | jq -r '.[] | select(.url | match("^'$rel_file'$")) | .digests.sha256')
+        rel_name=$(echo "$release" | jq -r '.[] | select(.url | match("^'$rel_file'$")) | .filename')
         echo "Getting ${rel_file}"
         mkdir -p "${r}/pythonhosted"
+        echo "$rel_hash  $rel_name" >> $gen_sha256
         pushd "${r}/pythonhosted" >/dev/null
         wget -q -N "${rel_file}"
         popd >/dev/null
       fi
       done
       pushd "${r}/pythonhosted" >/dev/null
-      [   -e $rel_sha256 ] || echo "WARNING: $rel_sha256 not found."
-      [ ! -e $rel_sha256 ] || sha256sum -c $rel_sha256
+      [ -e $rel_sha256 ] || echo "WARNING: $rel_sha256 not found, using hashes from json."
+      [ -e $rel_sha256 ] || rel_sha256=${repo}-${tag}.sha256
+      sha256sum -c $rel_sha256
       popd >/dev/null
    fi
 }
