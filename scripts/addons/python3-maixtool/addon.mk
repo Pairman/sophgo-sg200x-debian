@@ -22,7 +22,7 @@ $(BUILDDIR)/python3-maixtool-prepare-stamp:
 
 $(BUILDDIR)/python3-maixtool-whl-stamp: $(BUILDDIR)/python3-maixtool-prepare-stamp
 	@# install requirements on host
-	@apt-get install -y python3-flask python3-netifaces python3-pillow python3-yaml python3-progress python3-qrcode python3-requests python3-setuptools
+	@apt-get install -y python3-flask python3-netifaces python3-pillow python3-yaml python3-progress python3-qrcode python3-requests python3-setuptools python3-wheel
 	@tar -C $(PYTHON3_MAIXTOOL_DL_DIR) -xzf $(PYTHON3_MAIXTOOL_DL_DIR)/maixtool-$(PYTHON3_MAIXTOOL_VERSION).tar.gz
 	@cd $(PYTHON3_MAIXTOOL_DL_DIR)/maixtool-$(PYTHON3_MAIXTOOL_VERSION) && python3 setup.py bdist_wheel
 	@cp -p $(PYTHON3_MAIXTOOL_DL_DIR)/maixtool-$(PYTHON3_MAIXTOOL_VERSION)/dist/$(PYTHON3_MAIXTOOL_WHL_FILE) $(PYTHON3_MAIXTOOL_DL_DIR)/
