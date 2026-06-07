@@ -146,7 +146,7 @@ for f in */.git ; do
     done
     git checkout $b
   elif echo $d | grep -q -E '^openssl$' ; then
-    for x in 3rd OpenSSL_1_1_1-stable openssl-3.0 ; do
+    for x in 3rd 3rd-3.0 OpenSSL_1_1_1-stable openssl-3.0 ; do
       do_pull_push $x $u $s
     done
     git checkout $b
