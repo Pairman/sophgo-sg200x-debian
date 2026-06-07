@@ -42,6 +42,8 @@ else
 MAIXCAMLIB_DEPENDS = $(BUILDDIR)/pikvm-prepare-stamp
 endif
 
+MAIXCAMLIB_DEPENDS += $(BUILDDIR)/openssl-stamp
+
 $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@# rebuild maixcam_lib with cross compile toolchain
 	@rsync -avpPxH /rootfs/usr/lib/$(MAIXCDK_LIB_TARGET)/libsamplerate.so* $(MIDDLEWARE_OUT_DIR)/lib/
@@ -94,6 +96,16 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@# build opencv from source
 	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
 	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
+	@# use openssl built from source
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz ]; then \
+		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/include/ && \
+		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/so/ && \
+		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/openssl && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/openssl -xzf $(SDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz && \
+		sed -i 's|list(APPEND ADD_INCLUDE "include"|list(APPEND ADD_INCLUDE "openssl/include"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/CMakeLists.txt && \
+		sed -i 's|so/$(MAIXCDK_PLATFORM)|openssl/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/CMakeLists.txt && \
+		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/component.py ; \
+	fi
 	@# update download urls if required
 	@[ ! -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ] || sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py
 	@sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
@@ -167,16 +179,6 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@sed -i s/'#include "mipi_tx.h"'/'#include "cvi_mipi_tx.h"'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_common_vo.c
 	@# use ms_asr built from source
 	@rsync -avpPxH $(MS_ASR_OUT_DIR)/libms_asr_*.so $(MAIXCDK_BUILD_DIR)/components/nn/lib/
-	@# use openssl built from source
-	@if [ -e $(SDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz ]; then \
-		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/include/ && \
-		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/so/ && \
-		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/openssl && \
-		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/openssl -xzf $(SDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz && \
-		sed -i 's|list(APPEND ADD_INCLUDE "include"|list(APPEND ADD_INCLUDE "openssl/include"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/CMakeLists.txt && \
-		sed -i 's|so/$(MAIXCDK_PLATFORM)|openssl/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/CMakeLists.txt && \
-		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/component.py ; \
-	fi
 	@# add -ldl for glibc cross compile toolchain
 	@[ "X$(findstring musl,$(SDK_VER))" != "X" ] || sed -i s/'-mabi=lp64d$$'/'-mabi=lp64d -ldl'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@touch $@
