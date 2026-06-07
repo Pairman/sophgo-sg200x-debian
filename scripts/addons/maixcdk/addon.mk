@@ -54,8 +54,6 @@ else
 # sg200x
 MAIXCDK_PLATFORM ?= maixcam
 
-MAIXCDK_OSS_TARBALL_DIR = $(BUILDDIR)/tpusdk/oss/oss_release_tarball/$(TPUSDK_VER)
-
 MAIXCAMLIB_BUILD_DIR = $(BUILDDIR)/middleware/sample/test_mmf
 MAIXCAMLIB_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/maixcam_lib/release.linux
 MS_ASR_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/ms_asr/release.linux
@@ -119,11 +117,11 @@ $(BUILDDIR)/maixcdk-prepare-ax620e-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 
 $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
 	@# use alsa_lib built from source
-	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz ]; then \
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz ]; then \
 		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/include/ && \
 		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/lib/ && \
 		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib && \
-		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib -xzf $(MAIXCDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib -xzf $(SDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz && \
 		sed -i 's|list(APPEND ADD_INCLUDE "include"|list(APPEND ADD_INCLUDE "alsa_lib/include"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
 		sed -i 's|set(alsa_lib_include_dir "include")|set(alsa_lib_include_dir "alsa_lib/include")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
 		sed -i 's|set(alsa_lib_dir "lib")|set(alsa_lib_dir "alsa_lib/lib")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
@@ -140,17 +138,17 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@# use ffmpeg build from source
 	@# --enable-swscale must be set on oss ffmpeg
 	@# todo: enable avdevice/avfilter/avresample/postproc or remove it from CMakeLists.txt
-	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz ]; then \
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz ]; then \
 		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg && \
-		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg -xzf $(MAIXCDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg -xzf $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz && \
 		sed -i 's|set(src_path "$${ffmpeg_unzip_path}/ffmpeg")|set(src_path "ffmpeg")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt && \
 		for l in avdevice avfilter avresample postproc ; do \
 			[ -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg/lib/lib$${l}.so ] || sed -i /lib$${l}.so/d /build/MaixCDK/components/3rd_party/FFmpeg/CMakeLists.txt ; \
 		done && \
 		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ; \
 	fi
-	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz -a -e $(MAIXCDK_OSS_TARBALL_DIR)/zlib.tar.gz ]; then \
-		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg --wildcards -xzf $(MAIXCDK_OSS_TARBALL_DIR)/zlib.tar.gz 'lib/libz.so*' && \
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz -a -e $(SDK_OSS_TARBALL_DIR)/zlib.tar.gz ]; then \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg --wildcards -xzf $(SDK_OSS_TARBALL_DIR)/zlib.tar.gz 'lib/libz.so*' && \
 		sed -i 's|                                $${src_path}/lib/libswscale.so|                                $${src_path}/lib/libswscale.so\n                                $${src_path}/lib/libz.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt ; \
 	fi
 	@# use middleware libs from sdk
@@ -170,11 +168,11 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@# use ms_asr built from source
 	@rsync -avpPxH $(MS_ASR_OUT_DIR)/libms_asr_*.so $(MAIXCDK_BUILD_DIR)/components/nn/lib/
 	@# use openssl built from source
-	@if [ -e $(MAIXCDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz ]; then \
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz ]; then \
 		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/include/ && \
 		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/so/ && \
 		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/openssl && \
-		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/openssl -xzf $(MAIXCDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/openssl -xzf $(SDK_OSS_TARBALL_DIR)/openssl3.0.tar.gz && \
 		sed -i 's|list(APPEND ADD_INCLUDE "include"|list(APPEND ADD_INCLUDE "openssl/include"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/CMakeLists.txt && \
 		sed -i 's|so/$(MAIXCDK_PLATFORM)|openssl/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/CMakeLists.txt && \
 		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/openssl/component.py ; \
