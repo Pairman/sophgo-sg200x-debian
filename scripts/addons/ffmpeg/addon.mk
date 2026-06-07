@@ -1,7 +1,14 @@
 SHELL = /bin/bash
 
+ifneq ("$(CHIP_FAMILY)","sg200x")
+# ax620e
+FFMPEG_GIT_BRANCH = 3rd-6.1
+FFMPEG_GIT_REF = e38092ef9395d7049f871ef4d5411eb410e283e0
+else
+# sg200x
 FFMPEG_GIT_BRANCH = 3rd
 FFMPEG_GIT_REF = ece322ebb362f09b268c54569c3c6815712a9c9d
+endif
 
 ifeq ($(SDK_VER), 32bit)
 FFMPEG_ARCH = arm
@@ -61,10 +68,6 @@ FFMPEG_CONF_OPTS = \
 	--disable-gray \
 	--enable-swscale-alpha \
 	--disable-small \
-	--enable-dct \
-	--enable-fft \
-	--enable-mdct \
-	--enable-rdft \
 	--disable-crystalhd \
 	--disable-dxva2 \
 	--enable-runtime-cpudetect \
@@ -95,7 +98,6 @@ FFMPEG_CONF_OPTS = \
 	--enable-ffmpeg \
 	--disable-ffplay \
 	--disable-libv4l2 \
-	--disable-avresample \
 	--enable-ffprobe \
 	--disable-libxcb \
 	--disable-postproc \
@@ -128,7 +130,6 @@ FFMPEG_CONF_OPTS = \
 	--disable-libmodplug \
 	--disable-libspeex \
 	--disable-libtheora \
-	--disable-libwavpack \
 	--disable-iconv \
 	--disable-libfreetype \
 	--disable-fontconfig \
@@ -148,6 +149,16 @@ FFMPEG_CONF_OPTS = \
 	--disable-avx2 \
 	--disable-armv6 \
 	--disable-armv6t2
+
+ifeq ($(FFMPEG_GIT_BRANCH),3rd)
+FFMPEG_CONF_OPTS += \
+	--enable-dct \
+	--enable-fft \
+	--enable-mdct \
+	--enable-rdft \
+	--disable-avresample \
+	--disable-libwavpack
+endif
 
 ifeq ($(FFMPEG_ARM_CPU_HAS_VFPV2),y)
 FFMPEG_CONF_OPTS += --enable-vfp
