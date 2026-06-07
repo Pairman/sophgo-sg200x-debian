@@ -100,6 +100,11 @@ for f in */.git ; do
       do_pull_push $x $u $s
     done
     git checkout $b
+  elif echo $d | grep -q -E '^ffmpeg$' ; then
+    for x in 3rd 3rd-6.1 ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
   elif echo $d | grep -q -E '^fsbl$' ; then
     for x in licheervnano-cvisdk licheervnano ; do
       do_pull_push $x $u $s
@@ -238,6 +243,7 @@ for f in */.git ; do
     do_push_tags 'edk2-stable2020*'
  elif echo $d | grep -q -E '^ffmpeg$' ; then
     do_push_tags 'n4.4*'
+    do_push_tags 'n6.1*'
   elif echo $d | grep -q -E '^flatbuffers|^glog$' ; then
     do_push_tags 'v*'
   elif echo $d | grep -q -E '^harfbuzz$' ; then
