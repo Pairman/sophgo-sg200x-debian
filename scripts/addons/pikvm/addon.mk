@@ -12,6 +12,9 @@ PIKVM_DEPENDS = $(BUILDDIR)/nanokvm-pro-package-prepare-stamp $(BUILDDIR)/python
 ifneq ("$(findstring libgpiod,$(IMAGE_ADDITIONS))","")
 PIKVM_DEPENDS += $(BUILDDIR)/libgpiod-stamp
 endif
+ifneq ("$(findstring libgpiod,$(IMAGE_ADDITIONS))$(findstring maixcam2-python3,$(IMAGE_ADDITIONS))","")
+PIKVM_DEPENDS += $(BUILDDIR)/python3-gpiod-stamp
+endif
 
 PIKVM_BUILD_DIR = /rootfs/root/pikvm
 
@@ -46,7 +49,6 @@ $(BUILDDIR)/pikvm-prepare-gpiod-stamp: $(BUILDDIR)/pikvm-prepare-stamp
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libgpiod3_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libgpiod-dev_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/gpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
-	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" -a "$(findstring maixcam2-python3,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs pip install gpiod==$(LIBGPIOD_VERSION)
 	@chroot /rootfs apt-get install -y libgpiod-dev
 	@umount /rootfs/proc || true
 	@touch $@
