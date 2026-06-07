@@ -91,6 +91,8 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "$(MIDDLEWARE_OUT_DIR)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
 	@sed -i 's|$${msp_local_path}/out/.*_glibc/include|$(MIDDLEWARE_OUT_DIR)/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
 	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/component.py
+	@# disable ARM_MATH_DSP on ARM 32 bit
+	@[ "$(DEB_ARCH)" != "armhf" ] || sed -i s/'#define ARM_MATH_DSP'/'#define BROKEN_ARM_MATH_DSP'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/omv/omv/ports/common/arm_math_types.h
 	@# build opencv from source
 	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
 	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
