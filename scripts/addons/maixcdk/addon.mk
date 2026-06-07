@@ -42,7 +42,7 @@ else
 MAIXCAMLIB_DEPENDS = $(BUILDDIR)/pikvm-prepare-stamp
 endif
 
-MAIXCAMLIB_DEPENDS += $(BUILDDIR)/openssl-stamp
+MAIXCAMLIB_DEPENDS += $(BUILDDIR)/openssl-stamp $(BUILDDIR)/ffmpeg-stamp
 
 $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@# rebuild maixcam_lib with cross compile toolchain
@@ -84,6 +84,23 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@sed -i 's|if .CONFIG_LIBDATACHANNEL_COMPILE_FROM_SOURCE. not in confs|if 0|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/component.py
 	@sed -i 's|"$${srcs_path}/include" "$${srcs_path}/src"|"$${srcs_path}/include" "$${srcs_path}/include/rtc" "$${srcs_path}/src"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/CMakeLists.txt
 	@rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)
+	@# use ffmpeg build from source
+	@# --enable-swscale must be set on oss ffmpeg
+	@# todo: enable avdevice/avfilter/avresample/postproc instead of removing it from CMakeLists.txt
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz ]; then \
+		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg -xzf $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz && \
+		sed -i 's|set(src_path "$${ffmpeg_unzip_path}/ffmpeg_$(MAIXCDK_PLATFORM)_libs_n$${ffmpeg_version_str}")|set(src_path "ffmpeg")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt && \
+		sed -i 's|set(src_path "$${ffmpeg_unzip_path}/ffmpeg")|set(src_path "ffmpeg")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt && \
+		for l in avdevice avfilter avresample postproc ; do \
+			[ -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg/lib/lib$${l}.so ] || sed -i /lib$${l}.so/d /build/MaixCDK/components/3rd_party/FFmpeg/CMakeLists.txt ; \
+		done && \
+		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ; \
+	fi
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz -a -e $(SDK_OSS_TARBALL_DIR)/zlib.tar.gz ]; then \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg --wildcards -xzf $(SDK_OSS_TARBALL_DIR)/zlib.tar.gz 'lib/libz.so*' && \
+		sed -i 's|                                $${src_path}/lib/libswscale.so|                                $${src_path}/lib/libswscale.so\n                                $${src_path}/lib/libz.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt ; \
+	fi
 	@# build harfbuzz from source
 	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/component.py
 	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/CMakeLists.txt
@@ -147,22 +164,6 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@sed -i s/lib_musl/lib/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/CMakeLists.txt
 	@sed -i s/lib_glibc/lib/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/CMakeLists.txt
 	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/component.py
-	@# use ffmpeg build from source
-	@# --enable-swscale must be set on oss ffmpeg
-	@# todo: enable avdevice/avfilter/avresample/postproc or remove it from CMakeLists.txt
-	@if [ -e $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz ]; then \
-		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg && \
-		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg -xzf $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz && \
-		sed -i 's|set(src_path "$${ffmpeg_unzip_path}/ffmpeg")|set(src_path "ffmpeg")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt && \
-		for l in avdevice avfilter avresample postproc ; do \
-			[ -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg/lib/lib$${l}.so ] || sed -i /lib$${l}.so/d /build/MaixCDK/components/3rd_party/FFmpeg/CMakeLists.txt ; \
-		done && \
-		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ; \
-	fi
-	@if [ -e $(SDK_OSS_TARBALL_DIR)/ffmpeg.tar.gz -a -e $(SDK_OSS_TARBALL_DIR)/zlib.tar.gz ]; then \
-		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/ffmpeg --wildcards -xzf $(SDK_OSS_TARBALL_DIR)/zlib.tar.gz 'lib/libz.so*' && \
-		sed -i 's|                                $${src_path}/lib/libswscale.so|                                $${src_path}/lib/libswscale.so\n                                $${src_path}/lib/libz.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/CMakeLists.txt ; \
-	fi
 	@# use middleware libs from sdk
 	@sed -i 's|$${middleware_src_path}/v2/lib|$(MIDDLEWARE_OUT_DIR)/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i 's|$${middleware_src_path}/v2/include|$(MIDDLEWARE_OUT_DIR)/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
