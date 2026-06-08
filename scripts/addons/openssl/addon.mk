@@ -31,7 +31,7 @@ OPENSSL_3_0_BUILD_DIR = $(BUILDDIR)/openssl3.0/openssl
 
 $(BUILDDIR)/openssl-prepare-stamp:
 	@mkdir -p $(BUILDDIR)/openssl3.0/
-	@cd $(BUILDDIR)/openssl3.0/ && git clone -b 3rd-3.0 $(GIT_USER_URL)/openssl
+	@cd $(BUILDDIR)/openssl3.0/ && git clone $(GIT_CLONE_OPTS) -b 3rd-3.0 $(GIT_USER_URL)/openssl
 	@cd $(BUILDDIR)/openssl3.0/openssl/ && git checkout $(OPENSSL_3_0_GIT_REF)
 	@#cd $(BUILDDIR)/openssl3.0/openssl && git submodule set-url boringssl $(GIT_USER_URL)/boringssl
 	@cd $(BUILDDIR)/openssl3.0/openssl && git submodule set-url krb5 $(GIT_USER_URL)/krb5
