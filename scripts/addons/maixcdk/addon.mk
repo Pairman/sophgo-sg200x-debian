@@ -42,7 +42,7 @@ else
 MAIXCAMLIB_DEPENDS = $(BUILDDIR)/pikvm-prepare-stamp
 endif
 
-MAIXCAMLIB_DEPENDS += $(BUILDDIR)/openssl-stamp $(BUILDDIR)/ffmpeg-stamp
+MAIXCAMLIB_DEPENDS += $(BUILDDIR)/alsa_lib-stamp $(BUILDDIR)/openssl-stamp $(BUILDDIR)/ffmpeg-stamp
 
 $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@# rebuild maixcam_lib with cross compile toolchain
@@ -79,6 +79,19 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/maixcdk/*.patch), cd $(MAIXCDK_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@# use maixcam_lib built from source
 	@rsync -avpPxH $(MAIXCAMLIB_OUT_DIR)/libmaixcam_lib.so $(MAIXCDK_BUILD_DIR)/components/maixcam_lib/lib_$(MAIXCDK_PLATFORM)/
+	@# use alsa_lib built from source
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz ]; then \
+		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/include/ && \
+		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/lib/ && \
+		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib -xzf $(SDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz && \
+		sed -i 's|list(APPEND ADD_INCLUDE "include"|list(APPEND ADD_INCLUDE "alsa_lib/include"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|set(alsa_lib_include_dir "include")|set(alsa_lib_include_dir "alsa_lib/include")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|set(alsa_lib_dir "lib")|set(alsa_lib_dir "alsa_lib/lib")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|$${alsa_lib_dir}/$(MAIXCDK_PLATFORM)|$${alsa_lib_dir}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		sed -i 's|lib/$(MAIXCDK_PLATFORM)|alsa_lib/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
+		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/component.py ; \
+	fi
 	@# build libdatachannel from source
 	@sed -i 's|CONFIG_LIBDATACHANNEL_COMPILE_FROM_SOURCE|1|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/CMakeLists.txt
 	@sed -i 's|if .CONFIG_LIBDATACHANNEL_COMPILE_FROM_SOURCE. not in confs|if 0|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/component.py
@@ -145,19 +158,6 @@ $(BUILDDIR)/maixcdk-prepare-ax620e-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
-	@# use alsa_lib built from source
-	@if [ -e $(SDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz ]; then \
-		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/include/ && \
-		rm -rf $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/lib/ && \
-		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib && \
-		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/alsa_lib -xzf $(SDK_OSS_TARBALL_DIR)/alsa_lib.tar.gz && \
-		sed -i 's|list(APPEND ADD_INCLUDE "include"|list(APPEND ADD_INCLUDE "alsa_lib/include"|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
-		sed -i 's|set(alsa_lib_include_dir "include")|set(alsa_lib_include_dir "alsa_lib/include")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
-		sed -i 's|set(alsa_lib_dir "lib")|set(alsa_lib_dir "alsa_lib/lib")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
-		sed -i 's|$${alsa_lib_dir}/$(MAIXCDK_PLATFORM)|$${alsa_lib_dir}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
-		sed -i 's|lib/$(MAIXCDK_PLATFORM)|alsa_lib/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/CMakeLists.txt && \
-		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/alsa_lib/component.py ; \
-	fi
 	# use cvi_tpu built from source
 	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/cvi_tpu_lib
 	@rsync -avpPxH $(BUILDDIR)/tpusdk/install/soc_$(TPUSDK_BOARD_LINK)/tpu_$(TPUSDK_VER)/cvitek_tpu_sdk/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/cvi_tpu/cvi_tpu_lib/
