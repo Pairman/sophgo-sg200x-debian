@@ -181,7 +181,7 @@ FFMPEG_CONF_OPTS += \
 
 $(BUILDDIR)/ffmpeg-prepare-stamp:
 	@mkdir -p $(BUILDDIR)/ffmpeg/
-	@cd $(BUILDDIR)/ffmpeg/ && git clone -b $(FFMPEG_GIT_BRANCH) $(GIT_USER_URL)/ffmpeg
+	@cd $(BUILDDIR)/ffmpeg/ && git clone $(GIT_CLONE_OPTS) -b $(FFMPEG_GIT_BRANCH) $(GIT_USER_URL)/ffmpeg
 	@cd $(BUILDDIR)/ffmpeg/ffmpeg/ && git checkout $(FFMPEG_GIT_REF)
 	@touch $@
 
