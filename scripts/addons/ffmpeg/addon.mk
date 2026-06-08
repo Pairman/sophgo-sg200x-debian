@@ -56,12 +56,12 @@ FFMPEG_CONF_OPTS = \
 	--enable-static \
 	--enable-shared \
 	--prefix=/usr/local \
-	--disable-avfilter \
+	--enable-avfilter \
 	--disable-version3 \
 	--enable-logging \
 	--enable-optimizations \
 	--disable-extra-warnings \
-	--disable-avdevice \
+	--enable-avdevice \
 	--enable-avcodec \
 	--enable-avformat \
 	--enable-network \
