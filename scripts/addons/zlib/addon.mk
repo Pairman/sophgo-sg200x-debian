@@ -9,7 +9,7 @@ ZLIB_CMAKE_ENV = \
 
 $(BUILDDIR)/zlib-prepare-stamp:
 	@mkdir -p $(BUILDDIR)/zlib/
-	@cd $(BUILDDIR)/zlib/ && git clone -b 3rd $(GIT_USER_URL)/zlib
+	@cd $(BUILDDIR)/zlib/ && git clone $(GIT_CLONE_OPTS) -b 3rd $(GIT_USER_URL)/zlib
 	@cd $(BUILDDIR)/zlib/zlib/ && git checkout $(ZLIB_GIT_REF)
 	@touch $@
 
