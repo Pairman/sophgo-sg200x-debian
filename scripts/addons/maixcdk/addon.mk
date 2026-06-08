@@ -52,6 +52,12 @@ $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@cd $(MAIXCAMLIB_BUILD_DIR) && PATH="$(SDK_CROSS_COMPILE_PATH)/bin:$$PATH" make -C maixcam_lib CC=$(SDK_CROSS_COMPILE_PREFIX)gcc CXX=$(SDK_CROSS_COMPILE_PREFIX)g++ CFLAGS="-O3 -I$(MIDDLEWARE_OUT_DIR)/include" LDFLAGS="-L$(MIDDLEWARE_OUT_DIR)/lib"
 	@touch $@
 
+$(BUILDDIR)/msasr-stamp: $(BUILDDIR)/maixcamlib-stamp
+	@# rebuild ms_asr with cross compile toolchain
+	@cd $(MAIXCAMLIB_BUILD_DIR) && rm -rf ms_asr/build ms_asr/*.so*
+	@cd $(MAIXCAMLIB_BUILD_DIR) && PATH="$(SDK_CROSS_COMPILE_PATH)/bin:$$PATH" make -C ms_asr CC=$(SDK_CROSS_COMPILE_PREFIX)gcc CXX=$(SDK_CROSS_COMPILE_PREFIX)g++ CFLAGS="-O3 -I$(MIDDLEWARE_OUT_DIR)/include" LDFLAGS="-L$(MIDDLEWARE_OUT_DIR)/lib"
+	@touch $@
+
 else
 # sg200x
 MAIXCDK_PLATFORM ?= maixcam
@@ -64,9 +70,12 @@ MAIXCAMLIB_DEPENDS = $(BUILDDIR)/middleware-package-stamp $(BUILDDIR)/tpusdk-pac
 
 $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@touch $@
+
+$(BUILDDIR)/msasr-stamp: $(BUILDDIR)/maixcamlib-stamp
+	@touch $@
 endif
 
-$(BUILDDIR)/maixcdk-prepare-checkout-stamp: $(BUILDDIR)/maixcamlib-stamp $(BUILDDIR)/python3-maixtool-stamp
+$(BUILDDIR)/maixcdk-prepare-checkout-stamp: $(BUILDDIR)/maixcamlib-stamp $(BUILDDIR)/msasr-stamp $(BUILDDIR)/python3-maixtool-stamp
 	@cd $(BUILDDIR) && git clone --shallow-since=2024-08-18 $(GIT_USER_URL)/MaixCDK
 	@cd $(MAIXCDK_BUILD_DIR)/ && git checkout $(MAIXCDK_GIT_REF)
 	@cd $(MAIXCDK_BUILD_DIR)/dl && git clone -b full --depth 1 $(GIT_USER_URL)/maixcdk-dl-pkgs pkgs
@@ -155,6 +164,10 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-ax620e-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
+	@# use ms_asr built from source on ARM 32 bit
+	@[ "$(DEB_ARCH)" != "armhf" ] || rsync -avpPxH $(MS_ASR_OUT_DIR)/libms_asr_*.so $(MAIXCDK_BUILD_DIR)/components/nn/lib/
+	@# disable onnxruntime on ARM 32 bit
+	@[ "$(DEB_ARCH)" != "armhf" ] || sed -i /'list(APPEND ADD_DYNAMIC_LIB "$${src_path}.lib.libonnxruntime.so.1")'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/CMakeLists.txt
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
