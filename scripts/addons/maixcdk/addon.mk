@@ -205,6 +205,13 @@ $(BUILDDIR)/maixcdk-compile-one-example-stamp: $(BUILDDIR)/maixcdk-prepare-$(CHI
 	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/datachannel/libdatachannel.so* $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)/
 	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/datachannel/CMakeLists.txt
+	@# build harfbuzz only once
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/harfbuzz_install/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/harfbuzz_$(MAIXCDK_PLATFORM)/
+	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/harfbuzz/CMakeLists.txt
+	@sed -i 's|CONFIG_TOOLCHAIN_PATH MATCHES "musl"|1|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/CMakeLists.txt
+	@sed -i 's|set(harfbuzz_lib_dir "$${DL_EXTRACTED_PATH}/harfbuzz/harfbuzz_.*_v8.2.1")|set(harfbuzz_lib_dir "$${CMAKE_CURRENT_LIST_DIR}/harfbuzz_$(MAIXCDK_PLATFORM)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/CMakeLists.txt
+	@sed -i 's|set(harfbuzz_lib_dir "$${DL_EXTRACTED_PATH}/harfbuzz/harfbuzz_.*_$${version_str}")|set(harfbuzz_lib_dir "$${CMAKE_CURRENT_LIST_DIR}/harfbuzz_$(MAIXCDK_PLATFORM)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/CMakeLists.txt
+	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/component.py
 	@# build opencv only once
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/opencv4_install/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/opencv4_lib_$(MAIXCDK_PLATFORM)/
 	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/opencv/CMakeLists.txt
