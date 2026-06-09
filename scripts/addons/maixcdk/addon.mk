@@ -212,6 +212,13 @@ $(BUILDDIR)/maixcdk-compile-one-example-stamp: $(BUILDDIR)/maixcdk-prepare-$(CHI
 	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/datachannel/libdatachannel.so* $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/lib/$(MAIXCDK_PLATFORM)/
 	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/datachannel/CMakeLists.txt
+	@# build freetype only once
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/freetype_install/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/freetype/freetype_$(MAIXCDK_PLATFORM)/
+	@sed -i 's|$${freetype_install_dir}|$${CMAKE_CURRENT_LIST_DIR}/freetype_$(MAIXCDK_PLATFORM)|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/freetype/CMakeLists.txt
+	@sed -i 's|set(freetype_compile_cmd COMMAND .*)|set(freetype_compile_cmd COMMAND true)|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/freetype/CMakeLists.txt
+	@sed -i /'DEPENDS brotli'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/freetype/CMakeLists.txt
+	@sed -i /'list(APPEND ADD_FILE_DEPENDS .*)'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/freetype/CMakeLists.txt
+	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/freetype/component.py
 	@# build harfbuzz only once
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/harfbuzz_install/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/harfbuzz_$(MAIXCDK_PLATFORM)/
 	@cd $(MAIXCDK_BUILD_DIR) && git restore components/3rd_party/harfbuzz/CMakeLists.txt
