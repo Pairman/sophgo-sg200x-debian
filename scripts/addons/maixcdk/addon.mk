@@ -199,6 +199,13 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 
 $(BUILDDIR)/maixcdk-compile-one-example-stamp: $(BUILDDIR)/maixcdk-prepare-$(CHIP_FAMILY)-stamp
 	@cd $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/ && maixcdk build -p $(MAIXCDK_PLATFORM)
+	@# build brotli only once
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/examples/$(MAIXCDK_SAMPLE)/build/brotli_install/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/brotli/brotli_$(MAIXCDK_PLATFORM)/
+	@sed -i 's|$${install_dir}|$${CMAKE_CURRENT_LIST_DIR}/brotli_$(MAIXCDK_PLATFORM)|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/brotli/CMakeLists.txt
+	@sed -i 's|$${brotli_install_dir}|$${CMAKE_CURRENT_LIST_DIR}/brotli_$(MAIXCDK_PLATFORM)|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/brotli/CMakeLists.txt
+	@sed -i 's|set(brotli_compile_cmd COMMAND .*)|set(brotli_compile_cmd COMMAND true)|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/brotli/CMakeLists.txt
+	@sed -i /'list(APPEND ADD_FILE_DEPENDS .*)'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/brotli/CMakeLists.txt
+	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/brotli/component.py
 	@# build datachannel only once
 	@mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/include
 	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/libdatachannel_srcs/libdatachannel-*/include/ $(MAIXCDK_BUILD_DIR)/components/3rd_party/datachannel/include/
