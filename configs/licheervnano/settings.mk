@@ -35,6 +35,7 @@ else
 ifneq ($(strip $(ION_SIZE)),0)
 IMAGE_ADDITIONS += "maixapp"
 IMAGE_ADDITIONS += "tpusdk"
+IMAGE_ADDITIONS += "wifi-camera"
 endif
 IMAGE_ADDITIONS += "python3-dev"
 IMAGE_ADDITIONS += "python3-textual"
@@ -42,4 +43,4 @@ IMAGE_ADDITIONS += "usb-device"
 IMAGE_ADDITIONS += "zram-config"
 IMAGE_ADDITIONS += "wifi-builtin"
 IMAGE_ADDITIONS += "aic8800-firmware"
-IMAGE_ADDITIONS += "wifi-camera"
+endif
