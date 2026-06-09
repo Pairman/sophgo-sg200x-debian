@@ -20,8 +20,9 @@ PARTITION_FILE=partition_sd.xml
 STORAGE_TYPE=sd
 VARIANT?=e
 
-PACKAGES += " hostapd udhcpd wireless-regdb wpasupplicant"
+PACKAGES += " hostapd udhcpd wireless-regdb wpasupplicant xz-utils"
 PACKAGES += " python3-numpy python3-pil"
+DEV_PACKAGES += " build-essential"
 
 IMAGE_ADDITIONS += "sensor-config"
 IMAGE_ADDITIONS += "device-key"
@@ -35,7 +36,7 @@ ifneq ($(strip $(ION_SIZE)),0)
 IMAGE_ADDITIONS += "maixapp"
 IMAGE_ADDITIONS += "tpusdk"
 endif
-endif
+IMAGE_ADDITIONS += "python3-dev"
 IMAGE_ADDITIONS += "python3-textual"
 IMAGE_ADDITIONS += "usb-device"
 IMAGE_ADDITIONS += "zram-config"

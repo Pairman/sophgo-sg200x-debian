@@ -73,6 +73,7 @@ git_subclone sample/test_mmf/media_server-1.0.x https://$GIT_SOURCE_HOST/$GIT_SO
 git_subclone sample/kvm_stream https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/streameye -b kvm_stream
 #git_subclone modules/bin/cvi_json-c https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json-c -b cvi
 #git_subclone modules/bin/cvi_miniz https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/miniz -b cvi
+git_subclone 3rdparty/alsa_lib/alsa_lib https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/alsa-lib -b 3rd
 git_subclone 3rdparty/live/live555 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/live555 -b sg200x-dev
 git_subclone 3rdparty/json-c/json-c https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json-c -b 3rd
 git_subclone 3rdparty/miniz/miniz https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/miniz -b 3rd
@@ -96,6 +97,8 @@ git_subclone sdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/ireader-sdk -b maixcd
 git_subclone boringssl https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/boringssl -b main
 git_subclone pyca-cryptography https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/pyca-cryptography -b main
 git_subclone krb5 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/krb5 -b krb5-1.17
+git_subclone gost-engine https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/gost-engine -b master
+git_subclone wycheproof https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/wycheproof -b main
 
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/stb.git stb-src
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/googletest.git googletest-src

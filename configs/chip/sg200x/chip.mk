@@ -16,18 +16,26 @@ CROSS_COMPILE_PATH_32 = /host-tools/gcc/gcc-linaro-6.3.1-2017.05-x86_64_arm-linu
 CROSS_COMPILE_PATH_GLIBC_RISCV64 = /host-tools/gcc/riscv64-linux-x86_64
 CROSS_COMPILE_PATH_MUSL_RISCV64 = /host-tools/gcc/riscv64-linux-musl-x86_64
 
+SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53
+SDK_TARGET_LDFLAGS_32 = -march=armv7-a
+SDK_TARGET_LDFLAGS_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d
+
 ifeq ($(SDK_VER),glibc_riscv64)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_GLIBC_RISCV64)
+SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_RISCV64)
 else ifeq ($(SDK_VER),musl_riscv64)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_MUSL_RISCV64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_MUSL_RISCV64)
+SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_RISCV64)
 else ifeq ($(SDK_VER),64bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
+SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_64)
 else ifeq ($(SDK_VER),32bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_32)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_32)
+SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_32)
 else
 $(error $(red)SDK_VER is invalid$(reset))
 endif
@@ -93,6 +101,10 @@ BUILDROOT_ENV = CROSS_COMPILE_KERNEL=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX
 CROSS_COMPILE_SDK=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
+ifeq ($(findstring maixcdk,$(IMAGE_ADDITIONS)),)
+BR_ENABLE_MAIXAPP = $(findstring maixapp,$(IMAGE_ADDITIONS))
+endif
+
 TOOLCHAIN_URL_ARM ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g' | sed 's|/linaro|/arm/gnu|g')
 
 FSBL_MAKE_OPTS = $(UBOOT_MAKE_OPTS) \
@@ -116,6 +128,9 @@ endif
 
 MIDDLEWARE_ENV = $(OSDRV_ENV) $(SENSOR_ENV)
 
+MIDDLEWARE_OUT_DIR=$(BUILDDIR)/middleware/install/system/usr
+MIDDLEWARE_TARGET_DIR=/mnt/system/usr
+
 # BSPDEPENDS = $(CHIP_VENDOR)-middleware-$(BOARD)\
 #  $(CHIP_VENDOR)-osdrv-$(BOARD)-$(VARIANT)\
 #  linux-headers-$(BOARD)-$(VARIANT)\
@@ -134,6 +149,7 @@ include $(wildcard /builder/addons/*/addon.mk)
 
 addon-targets = $(patsubst "%,$(BUILDDIR)/%-stamp,$(patsubst %",%,$(IMAGE_ADDITIONS)))
 _PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(PACKAGES)))
+_DEV_PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(DEV_PACKAGES)))
 
 COMMA := ,
 EMPTY :=
@@ -151,6 +167,7 @@ $(info $(blue)ION Size: $(ION_SIZE)M$(reset))
 $(info $(blue)Default Panel: $(PANEL_TUNING_DEFAULT)$(reset))
 $(info $(blue)Image Addons: $(IMAGE_ADDITIONS)$(reset))
 $(info $(blue)Packages: $(_PACKAGES)$(reset))
+$(info $(blue)Development Packages: $(_DEV_PACKAGES)$(reset))
 
 NPROCS := $(shell nproc)
 
@@ -375,7 +392,8 @@ $(BUILDDIR)/middleware-prepare-clone-stamp:
 
 $(BUILDDIR)/middleware-prepare-checkout-root-stamp: $(BUILDDIR)/middleware-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out Middleware for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/middleware && git checkout 84b3c48
+	@cd $(BUILDDIR)/middleware && git checkout 4ab774a
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/alsa_lib/alsa_lib $(GIT_USER_URL)/alsa-lib
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/curl/curl $(GIT_USER_URL)/curl
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/ffmpeg/ffmpeg $(GIT_USER_URL)/FFmpeg
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/flatbuffers/flatbuffers $(GIT_USER_URL)/flatbuffers
@@ -388,6 +406,7 @@ $(BUILDDIR)/middleware-prepare-checkout-root-stamp: $(BUILDDIR)/middleware-prepa
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/opencv/opencv $(GIT_USER_URL)/opencv
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/opencv4.5/opencv $(GIT_USER_URL)/opencv
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/openssl/openssl $(GIT_USER_URL)/openssl
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/openssl3.0/openssl $(GIT_USER_URL)/openssl
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/sqlite/sqlite $(GIT_USER_URL)/sqlite
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/uv/uv $(GIT_USER_URL)/libuv
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/zlib/zlib $(GIT_USER_URL)/zlib
@@ -411,6 +430,12 @@ $(BUILDDIR)/middleware-prepare-checkout-openssl-stamp: $(BUILDDIR)/middleware-pr
 	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule set-url krb5 $(GIT_USER_URL)/krb5
 	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule set-url pyca-cryptography $(GIT_USER_URL)/pyca-cryptography
 	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule update --init --depth=1
+	@#cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url boringssl $(GIT_USER_URL)/boringssl
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url krb5 $(GIT_USER_URL)/krb5
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url pyca-cryptography $(GIT_USER_URL)/pyca-cryptography
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url gost-engine $(GIT_USER_URL)/gost-engine
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule set-url wycheproof $(GIT_USER_URL)/wycheproof
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl3.0/openssl && git submodule update --init --depth=1
 	@touch $@
 
 $(BUILDDIR)/middleware-prepare-checkout-media-server-stamp: $(BUILDDIR)/middleware-prepare-checkout-root-stamp
@@ -437,6 +462,7 @@ $(BUILDDIR)/middleware-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/common/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/sample/common/Makefile
+	[ "X$(findstring maixcdk,$(IMAGE_ADDITIONS))" = "X" ] || sed -i s/TRD_BUILD_OPTIONAL_MODULE/TRD_BUILD_TPUSDK_MODULE/g $(BUILDDIR)/middleware/3rdparty/ffmpeg/Makefile
 	@touch $@
 
 $(BUILDDIR)/middleware-prepare-configure-stamp: $(BUILDDIR)/middleware-prepare-patch-stamp
@@ -450,6 +476,9 @@ $(BUILDDIR)/middleware-compile-stamp: $(BUILDDIR)/middleware-prepare-configure-s
 	@cd $(BUILDDIR)/middleware && $(MIDDLEWARE_ENV) $(MAKE) KERNEL_DIR=$(KERNEL_OUTPUT_DIR) install DESTDIR=$(BUILDDIR)/middleware/install/system
 	@find $(BUILDDIR)/middleware/install/system -name "*.so*" -type f ! -path "*libtinyalsa.so" ! -path "*libaac*.so" ! -path "*libcvi_audio.so" ! -path "*libcvi_*ssp*.so" ! -path "*libcvi_*vqe*.so" ! -path "*libcvi_RES1.so" ! -path "*libcvi_VoiceEngine.so" ! -path "*libae.so" ! -path "*libaf.so" ! -path "*libawb.so" ! -path "*libisp_algo.so" -printf 'striping %p\n' -exec $(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)strip --strip-all {} \;
 	@find $(BUILDDIR)/middleware/install/system -executable -type f ! -name "*.sh" ! -path "*etc*" ! -path "*.ko" ! -path "*.so*" -printf 'striping %p\n' -exec $(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)strip --strip-all {} 2>/dev/null \;
+	@rsync -avpPxH $(BUILDDIR)/middleware/include/ $(MIDDLEWARE_OUT_DIR)/include/
+	@mkdir -p $(MIDDLEWARE_OUT_DIR)/include/linux
+	$(call copy_header_action, $(MIDDLEWARE_OUT_DIR)/include)
 	@touch $@
 
 $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
@@ -457,17 +486,29 @@ $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
 	@echo "$(COLOUR_GREEN)Packaging Middleware for $(BOARD)$(END_COLOUR)"
 	@rm -rf $(BUILDDIR)/middleware/3rdparty/tmp/
 	@$(eval MV=$(shell cd $(BUILDDIR)/middleware && git log -1 --format="%at" | xargs -I{} date -d @{} +-%Y%m%d-${KERNELREV}))
-	@$(eval MIDDLEWARE_PACKAGE_DIR=$(BUILDDIR)/package/$(CHIP_VENDOR)-middleware-$(BOARD)-$(MIDDLEWAREVERSION))
-	@$(eval MIDDLEWARE_TARGET_DIR=/mnt/system)
+	@$(eval MIDDLEWARE_PACKAGE_NAME=$(CHIP_VENDOR)-middleware-$(BOARD))
+	@$(eval MIDDLEWARE_PACKAGE_DIR=$(BUILDDIR)/package/$(MIDDLEWARE_PACKAGE_NAME)-$(MIDDLEWAREVERSION))
 	@mkdir -p $(MIDDLEWARE_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_PACKAGE_DIR)/
 	@mkdir -pv $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
-	@rsync -avpPxH $(BUILDDIR)/middleware/install/system/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rm -rf $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
-	@sed -i 's/Package: cvitek-middleware/Package: $(CHIP_VENDOR)-middleware-$(BOARD)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
-	@cd $(BUILDDIR)/package/ && dpkg-deb --build $(CHIP_VENDOR)-middleware-$(BOARD)-$(MIDDLEWAREVERSION) $(CHIP_VENDOR)-middleware-$(BOARD)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb
-	@cp $(BUILDDIR)/package/$(CHIP_VENDOR)-middleware-$(BOARD)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb /output/
+	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_PACKAGE_NAME)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
+	@cd $(BUILDDIR)/package/ && dpkg-deb --build $(MIDDLEWARE_PACKAGE_NAME)-$(MIDDLEWAREVERSION) $(MIDDLEWARE_PACKAGE_NAME)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb
+	@cp $(BUILDDIR)/package/$(MIDDLEWARE_PACKAGE_NAME)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb /output/
+	@$(eval MIDDLEWARE_DEV_PACKAGE_NAME=$(CHIP_VENDOR)-middleware-dev-$(BOARD))
+	@$(eval MIDDLEWARE_DEV_PACKAGE_DIR=$(BUILDDIR)/package/$(MIDDLEWARE_DEV_PACKAGE_NAME)-$(MIDDLEWAREVERSION))
+	@mkdir -p $(MIDDLEWARE_DEV_PACKAGE_DIR)
+	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_DEV_PACKAGE_DIR)/
+	@mkdir -pv $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/include/ $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
+	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_DEV_PACKAGE_NAME)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@cd $(BUILDDIR)/package/ && dpkg-deb --build $(MIDDLEWARE_DEV_PACKAGE_NAME)-$(MIDDLEWAREVERSION) $(MIDDLEWARE_DEV_PACKAGE_NAME)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb
+	@cp $(BUILDDIR)/package/$(MIDDLEWARE_DEV_PACKAGE_NAME)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb /output/
 	@touch $@
 
 middleware: $(BUILDDIR)/middleware-package-stamp
@@ -508,7 +549,7 @@ $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp: $(BUILDDIR)/buildroot-prepa
 
 $(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp
 	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout ce6d778
+	@cd $(BR_DIR) && git checkout 9b46139
 	@touch $@
 
 BUILDROOT_PREPARE_PATCH_STAMP_DEP := $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp
@@ -543,7 +584,7 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDROOT_PREPARE_PATCH_STAMP_DEP)
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-arm/toolchain-external-arm-arm.mk
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
-	@if [ "X$(findstring kvm,$(VARIANT))$(findstring maixapp,$(IMAGE_ADDITIONS))" = "X" ]; then \
+	@if [ "X$(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_CCACHE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_CA_CERTIFICATES/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_LIBOPENSSL/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -552,7 +593,7 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDROOT_PREPARE_PATCH_STAMP_DEP)
 		sed -i /BR2_PACKAGE_HOST_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_MAIX_CDK/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
-	@if [ "X$(findstring maixapp,$(IMAGE_ADDITIONS))" = "X" ]; then \
+	@if [ "X$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_PACKAGE_MPG123/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_LIBWEBSOCKETS/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_NANOMSG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -792,10 +833,10 @@ $(BUILDDIR)/image-prepare-stamp:
 	@-rm $(addon-targets)
 	@mkdir -p /rootfs/
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY) || true
-	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
 # 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
 	@curl -v -L $(USER_DEB_URL)/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_DEB_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
+	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES) $(_DEV_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
 	@touch $@
 
 $(BUILDDIR)/image-configure-stamp: $(BUILDDIR)/image-prepare-stamp $(BUILDDIR)/linux-package-stamp $(FSBL_TARGETS)
@@ -891,7 +932,95 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 	@umount /rootfs/dev || true
 	@touch $@
 
-$(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp
+$(BUILDDIR)/image-dev-list-stamp: $(BUILDDIR)/image-customize-stamp $(BUILDDIR)/python3-dev-uninstall-stamp
+	@echo "$(COLOUR_GREEN)Listing dev packages for $(BOARD)$(END_COLOUR)"
+	@chroot /rootfs apt-get update || true
+	@for p in libwebsockets-evlib-uv ; do \
+		chroot /rootfs dpkg -s $$p | grep -q '^Version:' || continue ; \
+		echo $$p >> $(BUILDDIR)/image-libs-$(BOARD) ; \
+	done
+	@for d in $(_PACKAGES) $(_DEV_PACKAGES) ; do \
+		echo $$d | grep -q -E '^lib.*-dev$$' || continue ; \
+		l=`echo $$d | sed s/'-dev$$'/''/g` ; \
+		chroot /rootfs dpkg -s $$d | grep -q '^Version:' || continue ; \
+		p=`chroot /rootfs dpkg -S $${l}.so.* 2>/dev/null | grep -v $$d | grep -m1 ':'$(DEB_ARCH)':' | cut -d ':' -f 1` ; \
+		[ "$$p" != "" ] || l=`echo $$d | sed s/'-dev$$'/''/g | sed s/'[0-9]*$$'/''/g` ; \
+		[ "$$p" != "" ] || p=`chroot /rootfs dpkg -S $${l}.so.* 2>/dev/null | grep -v $$d | grep -m1 ':'$(DEB_ARCH)':' | cut -d ':' -f 1` ; \
+		[ "$$p" != "" ] || continue ; \
+		chroot /rootfs dpkg -S $${l}.so.* 2>/dev/null | grep -v $$d | grep ':'$(DEB_ARCH)':' | cut -d ':' -f 1 | uniq | while read p ; do \
+			echo $$p >> $(BUILDDIR)/image-libs-$(BOARD) ; \
+		done && \
+		echo $$d >> $(BUILDDIR)/image-dev-$(BOARD) ; \
+	done
+	@for d in $(_DEV_PACKAGES) ; do \
+		chroot /rootfs dpkg -s $$d | grep -q '^Version:' || continue ; \
+		echo $$d >> $(BUILDDIR)/image-dev-$(BOARD) ; \
+	done
+	@touch $@
+
+$(BUILDDIR)/image-dev-uninstall-stamp: $(BUILDDIR)/image-dev-list-stamp
+	@echo "$(COLOUR_GREEN)Uninstalling dev packages for $(BOARD)$(END_COLOUR)"
+	@$(eval IMAGE_LIBS_DEPENDS=$(shell cat $(BUILDDIR)/image-libs-$(BOARD) | sort | uniq | tr '\n' ' '))
+	@$(eval IMAGE_DEV_DEPENDS=$(shell cat $(BUILDDIR)/image-dev-$(BOARD) | sort | uniq | tr '\n' ' '))
+	@chroot /rootfs mount proc -t proc /proc
+	@chroot /rootfs apt-get install -y $(IMAGE_LIBS_DEPENDS)
+	@chroot /rootfs apt-get remove --purge -y $(IMAGE_DEV_DEPENDS)
+	@chroot /rootfs apt-get autoremove --purge -y
+	@umount /rootfs/proc || true
+	@chroot /rootfs apt-get clean
+	@touch $@
+
+$(BUILDDIR)/image-libs-package-stamp: $(BUILDDIR)/image-dev-uninstall-stamp
+	@echo "$(COLOUR_GREEN)Packaging image-libs-$(CHIP_FAMILY) for $(BOARD)$(END_COLOUR)"
+	@$(eval IMAGE_LIBS_PACKAGE_DIR=$(BUILDDIR)/package/image-libs-$(BOARD)-$(VARIANT)-$(BSPVERSION))
+	@$(eval IMAGE_LIBS_DEPENDS=$(shell cat $(BUILDDIR)/image-libs-$(BOARD) | sort | uniq | tr '\n' ' '))
+	@$(eval _IMAGE_LIBS_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(IMAGE_LIBS_DEPENDS))))
+	@mkdir -p $(IMAGE_LIBS_PACKAGE_DIR)
+	@cp -r /builder/deb/board-support-sg200x/* $(IMAGE_LIBS_PACKAGE_DIR)/
+	@mkdir -pv $(IMAGE_LIBS_PACKAGE_DIR)/usr/share/doc/image-libs-$(BOARD)-$(VARIANT)/
+	@echo "meta package" > $(IMAGE_LIBS_PACKAGE_DIR)/usr/share/doc/image-libs-$(BOARD)-$(VARIANT)/README
+	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Version: 1.0.0-1/Version: $(BSPVERSION)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: board-support-sg200x/Package: image-libs-$(BOARD)-$(VARIANT)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Depends: .*/Depends: $(_IMAGE_LIBS_DEPENDS)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i '/Recommends: .*/d' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CVITEK/$(CHIP_VENDOR)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CV18xx and SG200X/$(CHIP)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/cv181x/$(CHIP)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Board support/Image libs/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@rm -f $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/postinst
+	@cd $(BUILDDIR)/package/ && dpkg-deb --build image-libs-$(BOARD)-$(VARIANT)-$(BSPVERSION) image-libs-$(BOARD)-$(VARIANT)_$(BSPVERSION)_$(DEB_ARCH).deb
+	@cp $(BUILDDIR)/package/image-libs-$(BOARD)-$(VARIANT)_$(BSPVERSION)_$(DEB_ARCH).deb /output/
+	@mkdir -p /rootfs/tmp/install/
+	@cp /output/image-libs-$(BOARD)-$(VARIANT)*.deb /rootfs/tmp/install/
+	@touch $@
+
+$(BUILDDIR)/image-dev-package-stamp: $(BUILDDIR)/image-dev-uninstall-stamp $(BUILDDIR)/image-libs-package-stamp
+	@echo "$(COLOUR_GREEN)Packaging image-dev-$(CHIP_FAMILY) for $(BOARD)$(END_COLOUR)"
+	@$(eval IMAGE_DEV_PACKAGE_DIR=$(BUILDDIR)/package/image-dev-$(BOARD)-$(VARIANT)-$(BSPVERSION))
+	@$(eval IMAGE_DEV_DEPENDS=$(shell cat $(BUILDDIR)/image-dev-$(BOARD) | sort | uniq | tr '\n' ' '))
+	@$(eval _IMAGE_DEV_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(IMAGE_DEV_DEPENDS))))
+	@mkdir -p $(IMAGE_DEV_PACKAGE_DIR)
+	@cp -r /builder/deb/board-support-sg200x/* $(IMAGE_DEV_PACKAGE_DIR)/
+	@mkdir -pv $(IMAGE_DEV_PACKAGE_DIR)/usr/share/doc/image-dev-$(BOARD)-$(VARIANT)/
+	@echo "meta package" > $(IMAGE_DEV_PACKAGE_DIR)/usr/share/doc/image-dev-$(BOARD)-$(VARIANT)/README
+	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Version: 1.0.0-1/Version: $(BSPVERSION)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: board-support-sg200x/Package: image-dev-$(BOARD)-$(VARIANT)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Depends: .*/Depends: $(_IMAGE_DEV_DEPENDS)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i '/Recommends: .*/d' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CVITEK/$(CHIP_VENDOR)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CV18xx and SG200X/$(CHIP)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/cv181x/$(CHIP)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Board support/Image development/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@rm -f $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/postinst
+	@cd $(BUILDDIR)/package/ && dpkg-deb --build image-dev-$(BOARD)-$(VARIANT)-$(BSPVERSION) image-dev-$(BOARD)-$(VARIANT)_$(BSPVERSION)_$(DEB_ARCH).deb
+	@cp $(BUILDDIR)/package/image-dev-$(BOARD)-$(VARIANT)_$(BSPVERSION)_$(DEB_ARCH).deb /output/
+	@#mkdir -p /rootfs/tmp/install/
+	@#cp /output/image-dev-$(BOARD)-$(VARIANT)*.deb /rootfs/tmp/install/
+	@touch $@
+
+$(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp $(BUILDDIR)/image-dev-package-stamp
 	@echo "$(COLOUR_GREEN)Compiling Image for $(BOARD)$(END_COLOUR)"
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf $(BR_DIR)/dl
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf $(BR_OUTPUT_DIR)/per-package
