@@ -21,6 +21,12 @@ else
 $(error $(red)DEB_ARCH is invalid$(reset))
 endif
 
+ifeq ($(DEB_ARCH),armhf)
+MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE ?= y
+else
+MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE ?= n
+endif
+
 ifneq ($(SDK_TARGET_LDFLAGS),)
 MAIXCDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS)
 else
@@ -43,6 +49,10 @@ MAIXCAMLIB_DEPENDS = $(BUILDDIR)/pikvm-prepare-stamp
 endif
 
 MAIXCAMLIB_DEPENDS += $(BUILDDIR)/alsa_lib-stamp $(BUILDDIR)/openssl-stamp $(BUILDDIR)/ffmpeg-stamp
+
+ifeq ($(MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE),y)
+MAIXCAMLIB_DEPENDS += $(BUILDDIR)/onnxruntime-stamp
+endif
 
 $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@# rebuild maixcam_lib with cross compile toolchain
@@ -67,6 +77,10 @@ MAIXCAMLIB_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/maixcam_lib/release.linux
 MS_ASR_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/ms_asr/release.linux
 
 MAIXCAMLIB_DEPENDS = $(BUILDDIR)/middleware-package-stamp $(BUILDDIR)/tpusdk-package-stamp
+
+ifeq ($(MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE),y)
+MAIXCAMLIB_DEPENDS += $(BUILDDIR)/onnxruntime-stamp
+endif
 
 $(BUILDDIR)/maixcamlib-stamp: $(MAIXCAMLIB_DEPENDS)
 	@touch $@
@@ -132,6 +146,13 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/component.py
 	@# disable ARM_MATH_DSP on ARM 32 bit
 	@[ "$(DEB_ARCH)" != "armhf" ] || sed -i s/'#define ARM_MATH_DSP'/'#define BROKEN_ARM_MATH_DSP'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/omv/omv/ports/common/arm_math_types.h
+	@# use onnxruntime build from source
+	@if [ -e $(SDK_OSS_TARBALL_DIR)/onnxruntime.tar.gz ]; then \
+		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/onnxruntime && \
+		tar -C $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/onnxruntime -xzf $(SDK_OSS_TARBALL_DIR)/onnxruntime.tar.gz && \
+		sed -i 's|set(src_path "$${onnxruntime_unzip_path}/$(MAIXCDK_PLATFORM)_onnxruntime_v$${onnxruntime_version_str}")|set(src_path "onnxruntime")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/CMakeLists.txt && \
+		rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py ; \
+	fi
 	@# build opencv from source
 	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
 	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/CMakeLists.txt
@@ -148,7 +169,7 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@# update download urls if required
 	@[ ! -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py ] || sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/FFmpeg/component.py
 	@sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
-	@sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py
+	@[ ! -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py ] || sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py
 	@sed -i 's|https://github.com/opencv/ade/archive|$(GIT_RELEASES_URL)/opencv/ade/archive|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
 	@sed -i 's|https://github.com/opencv/opencv/archive|$(GIT_RELEASES_URL)/opencv/opencv/archive|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
 	@[ "X$(MAIXCDK_TOOLCHAIN_URL)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(MAIXCDK_TOOLCHAIN_URL)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
@@ -167,7 +188,7 @@ $(BUILDDIR)/maixcdk-prepare-ax620e-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@# use ms_asr built from source on ARM 32 bit
 	@[ "$(DEB_ARCH)" != "armhf" ] || rsync -avpPxH $(MS_ASR_OUT_DIR)/libms_asr_*.so $(MAIXCDK_BUILD_DIR)/components/nn/lib/
 	@# disable onnxruntime on ARM 32 bit
-	@[ "$(DEB_ARCH)" != "armhf" ] || sed -i /'list(APPEND ADD_DYNAMIC_LIB "$${src_path}.lib.libonnxruntime.so.1")'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/CMakeLists.txt
+	@[ "$(DEB_ARCH)" != "armhf" -o "$(MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE)" = "y" ] || sed -i /'list(APPEND ADD_DYNAMIC_LIB "$${src_path}.lib.libonnxruntime.so.1")'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/CMakeLists.txt
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
@@ -259,7 +280,8 @@ $(BUILDDIR)/maixcdk-distlibs-stamp: $(BUILDDIR)/maixcdk-distapps-stamp
 	@touch $@
 
 $(BUILDDIR)/maixcdk-distlibs-ax620e-stamp: $(BUILDDIR)/maixcdk-distlibs-stamp
-	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/onnxruntime_srcs/$(MAIXCDK_PLATFORM)_onnxruntime_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
+	@rsync -avpPxH $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/onnxruntime/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/ || \
+		rsync -avpPxH $(MAIXCDK_BUILD_DIR)/dl/extracted/onnxruntime_srcs/$(MAIXCDK_PLATFORM)_onnxruntime_*/lib/*.so* $(MAIXCDK_BUILD_DIR)/dist/usr/lib/
 	@touch $@
 
 $(BUILDDIR)/maixcdk-distlibs-sg200x-stamp: $(BUILDDIR)/maixcdk-distlibs-stamp
