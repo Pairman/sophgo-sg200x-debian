@@ -836,7 +836,7 @@ $(BUILDDIR)/image-prepare-stamp:
 # 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
 	@curl -v -L $(USER_DEB_URL)/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES) $(_DEV_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_DEB_URL) stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES) $(_DEV_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_DEB_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
 	@touch $@
 
 $(BUILDDIR)/image-configure-stamp: $(BUILDDIR)/image-prepare-stamp $(BUILDDIR)/linux-package-stamp $(FSBL_TARGETS)
