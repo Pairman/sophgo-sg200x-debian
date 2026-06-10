@@ -140,6 +140,7 @@ git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/zxing-cpp
 
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/harfbuzz
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/marisa-trie
+git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/onnxruntime
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/OpenCC opencc
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/quirc
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/rapidjson
