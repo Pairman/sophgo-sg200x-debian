@@ -19,6 +19,8 @@ ONNXRUNTIME_GIT_REF = 89746dc19a0a1ae59ebf4b16df9acab8f99f3925
 # v1.22.2
 #ONNXRUNTIME_GIT_REF = 5630b081cd25e4eccc7516a652ff956e51676794
 
+ONNXRUNTIME_GIT_DIR = $(BUILDDIR)/onnxruntime/onnxruntime
+
 ONNXRUNTIME_CMAKE_ENV = CMAKE_BUILD_TYPE="Release" \
 	CROSS_COMPILE=$(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX) \
 	CC=$(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)gcc CFLAGS="$(SDK_TARGET_CFLAGS) -g0" \
@@ -48,8 +50,8 @@ ONNXRUNTIME_CMAKE_OPTS = \
 
 $(BUILDDIR)/onnxruntime-prepare-stamp:
 	@mkdir -p $(BUILDDIR)/onnxruntime/
-	@cd $(BUILDDIR)/onnxruntime/ && git clone -b main $(GIT_USER_URL)/onnxruntime
-	@cd $(BUILDDIR)/onnxruntime/onnxruntime/ && git checkout $(ONNXRUNTIME_GIT_REF)
+	@cd $(BUILDDIR)/onnxruntime/ && git clone --depth 1 -b 3rd $(GIT_USER_URL)/onnxruntime
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && git checkout $(ONNXRUNTIME_GIT_REF)
 	@touch $@
 
 $(BUILDDIR)/onnxruntime-protoc-stamp:
@@ -60,7 +62,7 @@ $(BUILDDIR)/onnxruntime-stamp: $(BUILDDIR)/onnxruntime-prepare-stamp $(BUILDDIR)
 	@mkdir -p $(SDK_OSS_TARBALL_DIR)
 	@mkdir -p $(BUILDDIR)/onnxruntime/build
 	@mkdir -p $(BUILDDIR)/onnxruntime/output
-	@cd $(BUILDDIR)/onnxruntime/build ; $(ONNXRUNTIME_CMAKE_ENV) cmake $(BUILDDIR)/onnxruntime/onnxruntime/cmake -DCMAKE_INSTALL_PREFIX=$(BUILDDIR)/onnxruntime/output $(ONNXRUNTIME_CMAKE_OPTS)
+	@cd $(BUILDDIR)/onnxruntime/build ; $(ONNXRUNTIME_CMAKE_ENV) cmake $(ONNXRUNTIME_GIT_DIR)/cmake -DCMAKE_INSTALL_PREFIX=$(BUILDDIR)/onnxruntime/output $(ONNXRUNTIME_CMAKE_OPTS)
 	@cd $(BUILDDIR)/onnxruntime/build ; $(ONNXRUNTIME_CMAKE_ENV) make install
 	@tar -C $(BUILDDIR)/onnxruntime/output -czf $(SDK_OSS_TARBALL_DIR)/onnxruntime.tar.gz include lib
 	@touch $@
