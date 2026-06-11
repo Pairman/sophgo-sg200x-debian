@@ -146,6 +146,10 @@ git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/quirc
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/rapidjson
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/uchardet
 
+git_subclone cmake/external/onnx https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/onnx -b main
+git_subclone cmake/external/libprotobuf-mutator https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/libprotobuf-mutator -b master
+git_subclone cmake/external/emsdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/emsdk -b main
+
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/tinyalsa
 
 git_clone -b nanokvmpro https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/kvmd
