@@ -68,6 +68,10 @@ $(BUILDDIR)/onnxruntime-prepare-stamp:
 	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/dcleblanc/SafeInt/archive|$(GIT_RELEASES_URL)/dcleblanc/SafeInt/archive|g' cmake/deps.txt
 	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/google/flatbuffers/archive|$(GIT_RELEASES_URL)/google/flatbuffers/archive|g' cmake/deps.txt
 	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/onnx/onnx/archive|$(GIT_RELEASES_URL)/onnx/onnx/archive|g' cmake/deps.txt
+	# allow gcc 10.4 on riscv64
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && [ "$(CMAKE_SYSTEM_PROCESSOR)" != "riscv64" ] || sed -i s/'CMAKE_C_COMPILER_VERSION VERSION_LESS 11\.1'/'CMAKE_C_COMPILER_VERSION VERSION_LESS 10.4'/g cmake/CMakeLists.txt
+	@# fix compile error with gcc 10.4 on riscv64
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && [ "$(CMAKE_SYSTEM_PROCESSOR)" != "riscv64" ] || git apply --ignore-whitespace /configs/common/patches/onnxruntime/_onnxruntime-fix-SplitReplaceWithQuant.patch
 	@touch $@
 
 $(BUILDDIR)/onnxruntime-protoc-stamp:
