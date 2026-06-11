@@ -52,6 +52,22 @@ $(BUILDDIR)/onnxruntime-prepare-stamp:
 	@mkdir -p $(BUILDDIR)/onnxruntime/
 	@cd $(BUILDDIR)/onnxruntime/ && git clone --depth 1 -b 3rd $(GIT_USER_URL)/onnxruntime
 	@cd $(ONNXRUNTIME_GIT_DIR)/ && git checkout $(ONNXRUNTIME_GIT_REF)
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && git submodule set-url cmake/external/onnx $(GIT_USER_URL)/onnx
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && git submodule set-url cmake/external/libprotobuf-mutator $(GIT_USER_URL)/libprotobuf-mutator
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && git submodule set-url cmake/external/emsdk $(GIT_USER_URL)/emsdk
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/abseil/abseil-cpp/archive|$(GIT_RELEASES_URL)/abseil/abseil-cpp/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/eigen-mirror/eigen/archive|$(GIT_RELEASES_URL)/eigen-mirror/eigen/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/google/re2/archive|$(GIT_RELEASES_URL)/google/re2/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/google/googletest/archive|$(GIT_RELEASES_URL)/google/googletest/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/nlohmann/json/archive|$(GIT_RELEASES_URL)/nlohmann/json/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/protocolbuffers/protobuf/archive|$(GIT_RELEASES_URL)/protocolbuffers/protobuf/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/HowardHinnant/date/archive|$(GIT_RELEASES_URL)/HowardHinnant/date/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/boostorg/mp11/archive|$(GIT_RELEASES_URL)/boostorg/mp11/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/pytorch/cpuinfo/archive|$(GIT_RELEASES_URL)/pytorch/cpuinfo/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/microsoft/GSL/archive|$(GIT_RELEASES_URL)/microsoft/GSL/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/dcleblanc/SafeInt/archive|$(GIT_RELEASES_URL)/dcleblanc/SafeInt/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/google/flatbuffers/archive|$(GIT_RELEASES_URL)/google/flatbuffers/archive|g' cmake/deps.txt
+	@cd $(ONNXRUNTIME_GIT_DIR)/ && sed -i 's|https://github.com/onnx/onnx/archive|$(GIT_RELEASES_URL)/onnx/onnx/archive|g' cmake/deps.txt
 	@touch $@
 
 $(BUILDDIR)/onnxruntime-protoc-stamp:
