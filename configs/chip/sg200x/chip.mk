@@ -6,35 +6,44 @@ PACKAGES += " gpiod"
 
 IMAGE_ADDITIONS+="overlayfs-tools"
 
-CROSS_COMPILE_64 = aarch64-linux-gnu-
-CROSS_COMPILE_32 = arm-linux-gnueabihf-
+CROSS_COMPILE_64 = aarch64-none-linux-gnu-
+CROSS_COMPILE_32 = arm-none-linux-gnueabihf-
 CROSS_COMPILE_GLIBC_RISCV64 = riscv64-unknown-linux-gnu-
 CROSS_COMPILE_MUSL_RISCV64 = riscv64-unknown-linux-musl-
 
-CROSS_COMPILE_PATH_64 = /host-tools/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu
-CROSS_COMPILE_PATH_32 = /host-tools/gcc/gcc-linaro-6.3.1-2017.05-x86_64_arm-linux-gnueabihf
+CROSS_COMPILE_PATH_64 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-aarch64-none-linux-gnu
+CROSS_COMPILE_PATH_32 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-linux-gnueabihf
 CROSS_COMPILE_PATH_GLIBC_RISCV64 = /host-tools/gcc/riscv64-linux-x86_64
 CROSS_COMPILE_PATH_MUSL_RISCV64 = /host-tools/gcc/riscv64-linux-musl-x86_64
 
-SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53
+SDK_SYSROOT_64 = $(CROSS_COMPILE_PATH_64)/aarch64-none-linux-gnu/libc
+SDK_SYSROOT_32 = $(CROSS_COMPILE_PATH_32)/arm-none-linux-gnueabihf/libc
+SDK_SYSROOT_GLIBC_RISCV64 = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)/sysroot
+SDK_SYSROOT_MUSL_RISCV64 = $(CROSS_COMPILE_PATH_MUSL_RISCV64)/sysroot
+
+SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53 -mno-outline-atomics
 SDK_TARGET_LDFLAGS_32 = -march=armv7-a
 SDK_TARGET_LDFLAGS_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d
 
 ifeq ($(SDK_VER),glibc_riscv64)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_GLIBC_RISCV64)
+SDK_SYSROOT = $(SDK_SYSROOT_GLIBC_RISCV64)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_RISCV64)
 else ifeq ($(SDK_VER),musl_riscv64)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_MUSL_RISCV64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_MUSL_RISCV64)
+SDK_SYSROOT = $(SDK_SYSROOT_MUSL_RISCV64)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_RISCV64)
 else ifeq ($(SDK_VER),64bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
+SDK_SYSROOT = $(SDK_SYSROOT_64)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_64)
 else ifeq ($(SDK_VER),32bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_32)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_32)
+SDK_SYSROOT = $(SDK_SYSROOT_32)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_32)
 else
 $(error $(red)SDK_VER is invalid$(reset))
@@ -140,7 +149,7 @@ BSPFILTER =
 
 include $(wildcard /builder/addons/*/addon.mk)
 
-SDK_OSS_TARBALL_DIR = $(BUILDDIR)/tpusdk/oss/oss_release_tarball/$(TPUSDK_VER)
+SDK_OSS_TARBALL_DIR = $(BUILDDIR)/tpusdk/oss/oss_release_tarball/$(SDK_VER)
 
 addon-targets = $(patsubst "%,$(BUILDDIR)/%-stamp,$(patsubst %",%,$(IMAGE_ADDITIONS)))
 _PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(PACKAGES)))
@@ -216,10 +225,11 @@ $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h: $(BUILDDIR)/$(BOARD)-$(VARIA
 
 $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@echo "$(COLOUR_GREEN)Patching Toolchain for $(BOARD)$(END_COLOUR)"
-	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-linaro-toolchains.sh
+	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-toolchains.sh
 	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-thead-toolchains.sh
 	@if [ "$(UBOOT_ARCH)" = "arm" ]; then \
-		cd / && /builder/replace-all-linaro-toolchains.sh && \
+		rm -rf /host-tools/gcc/riscv64-*/ && \
+		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
 	else \
 		apt-get install -y gcc-riscv64-unknown-elf && \
@@ -387,7 +397,7 @@ $(BUILDDIR)/middleware-prepare-clone-stamp:
 
 $(BUILDDIR)/middleware-prepare-checkout-root-stamp: $(BUILDDIR)/middleware-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out Middleware for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/middleware && git checkout 4ab774a
+	@cd $(BUILDDIR)/middleware && git checkout cd8bb74
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/alsa_lib/alsa_lib $(GIT_USER_URL)/alsa-lib
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/curl/curl $(GIT_USER_URL)/curl
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/ffmpeg/ffmpeg $(GIT_USER_URL)/FFmpeg
@@ -453,6 +463,10 @@ $(BUILDDIR)/middleware-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/middleware/*.patch), cd $(BUILDDIR)/middleware && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/middleware/*.patch), cd $(BUILDDIR)/middleware && git apply --ignore-whitespace $(file);)
 	sed -i 's|$$(ROOT_DIR)/../host-tools|/host-tools|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-aarch64-linux-gnu|$(SDK_SYSROOT_64)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf|$(SDK_SYSROOT_32)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|/host-tools/gcc/riscv64-linux-x86_64/sysroot|$(SDK_SYSROOT_GLIBC_RISCV64)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|/host-tools/gcc/riscv64-linux-musl-x86_64/sysroot|$(SDK_SYSROOT_MUSL_RISCV64)|g' $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/common/Makefile
@@ -544,7 +558,7 @@ $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp: $(BUILDDIR)/buildroot-prepa
 
 $(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp
 	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout 9b46139
+	@cd $(BR_DIR) && git checkout 578e9b9
 	@touch $@
 
 $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
@@ -583,6 +597,8 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 		sed -i /BR2_PACKAGE_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_HOST_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_MAIX_CDK/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+		sed -i /BR2_PACKAGE_JPEG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+		sed -i /BR2_PACKAGE_LIBQRENCODE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
 	@if [ "X$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_PACKAGE_MPG123/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
