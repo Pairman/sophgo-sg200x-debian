@@ -147,6 +147,8 @@ BSPFILTER =
 
 include $(wildcard /builder/addons/*/addon.mk)
 
+SDK_OSS_TARBALL_DIR = $(BUILDDIR)/tpusdk/oss/oss_release_tarball/$(TPUSDK_VER)
+
 addon-targets = $(patsubst "%,$(BUILDDIR)/%-stamp,$(patsubst %",%,$(IMAGE_ADDITIONS)))
 _PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(PACKAGES)))
 _DEV_PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(DEV_PACKAGES)))
