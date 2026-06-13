@@ -16,6 +16,11 @@ CROSS_COMPILE_PATH_32 = /host-tools/gcc/gcc-linaro-6.3.1-2017.05-x86_64_arm-linu
 CROSS_COMPILE_PATH_GLIBC_RISCV64 = /host-tools/gcc/riscv64-linux-x86_64
 CROSS_COMPILE_PATH_MUSL_RISCV64 = /host-tools/gcc/riscv64-linux-musl-x86_64
 
+SDK_SYSROOT_64 = $(BUILDDIR)/ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-aarch64-linux-gnu
+SDK_SYSROOT_32 = $(BUILDDIR)/ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf
+SDK_SYSROOT_GLIBC_RISCV64 = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)/sysroot
+SDK_SYSROOT_MUSL_RISCV64 = $(CROSS_COMPILE_PATH_MUSL_RISCV64)/sysroot
+
 SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53
 SDK_TARGET_LDFLAGS_32 = -march=armv7-a
 SDK_TARGET_LDFLAGS_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d
@@ -23,18 +28,22 @@ SDK_TARGET_LDFLAGS_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=
 ifeq ($(SDK_VER),glibc_riscv64)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_GLIBC_RISCV64)
+SDK_SYSROOT = $(SDK_SYSROOT_GLIBC_RISCV64)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_RISCV64)
 else ifeq ($(SDK_VER),musl_riscv64)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_MUSL_RISCV64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_MUSL_RISCV64)
+SDK_SYSROOT = $(SDK_SYSROOT_MUSL_RISCV64)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_RISCV64)
 else ifeq ($(SDK_VER),64bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
+SDK_SYSROOT = $(SDK_SYSROOT_64)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_64)
 else ifeq ($(SDK_VER),32bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_32)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_32)
+SDK_SYSROOT = $(SDK_SYSROOT_32)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_32)
 else
 $(error $(red)SDK_VER is invalid$(reset))
@@ -453,6 +462,10 @@ $(BUILDDIR)/middleware-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/middleware/*.patch), cd $(BUILDDIR)/middleware && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/middleware/*.patch), cd $(BUILDDIR)/middleware && git apply --ignore-whitespace $(file);)
 	sed -i 's|$$(ROOT_DIR)/../host-tools|/host-tools|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-aarch64-linux-gnu|$(SDK_SYSROOT_64)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf|$(SDK_SYSROOT_32)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|/host-tools/gcc/riscv64-linux-x86_64/sysroot|$(SDK_SYSROOT_GLIBC_RISCV64)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|/host-tools/gcc/riscv64-linux-musl-x86_64/sysroot|$(SDK_SYSROOT_MUSL_RISCV64)|g' $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/common/Makefile
