@@ -146,6 +146,11 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/component.py
 	@# disable ARM_MATH_DSP on ARM 32 bit
 	@[ "$(DEB_ARCH)" != "armhf" ] || sed -i s/'#define ARM_MATH_DSP'/'#define BROKEN_ARM_MATH_DSP'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/omv/omv/ports/common/arm_math_types.h
+	@# use maixcam2 onnxruntime on ARM 64 bit
+	@[ "$(DEB_ARCH)" != "arm64" -o "$(MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE)" = "y" ] || \
+		sed -i 's|maixcam_onnxruntime_v$${onnxruntime_version_str}|maixcam2_onnxruntime_v$${onnxruntime_version_str}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/CMakeLists.txt && \
+		sed -i 's|maixcam_onnxruntime_v{version}|maixcam2_onnxruntime_v{version}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py && \
+		sed -i 's|sg2002_onnxruntime_v{version}|maixcam2_onnxruntime_v{version}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py
 	@# use onnxruntime build from source
 	@if [ -e $(SDK_OSS_TARBALL_DIR)/onnxruntime.tar.gz ]; then \
 		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/onnxruntime && \
