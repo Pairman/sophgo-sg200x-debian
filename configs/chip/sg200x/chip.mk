@@ -6,18 +6,18 @@ PACKAGES += " gpiod"
 
 IMAGE_ADDITIONS+="overlayfs-tools"
 
-CROSS_COMPILE_64 = aarch64-linux-gnu-
-CROSS_COMPILE_32 = arm-linux-gnueabihf-
+CROSS_COMPILE_64 = aarch64-none-linux-gnu-
+CROSS_COMPILE_32 = arm-none-linux-gnueabihf-
 CROSS_COMPILE_GLIBC_RISCV64 = riscv64-unknown-linux-gnu-
 CROSS_COMPILE_MUSL_RISCV64 = riscv64-unknown-linux-musl-
 
-CROSS_COMPILE_PATH_64 = /host-tools/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu
-CROSS_COMPILE_PATH_32 = /host-tools/gcc/gcc-linaro-6.3.1-2017.05-x86_64_arm-linux-gnueabihf
+CROSS_COMPILE_PATH_64 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-aarch64-none-linux-gnu
+CROSS_COMPILE_PATH_32 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-linux-gnueabihf
 CROSS_COMPILE_PATH_GLIBC_RISCV64 = /host-tools/gcc/riscv64-linux-x86_64
 CROSS_COMPILE_PATH_MUSL_RISCV64 = /host-tools/gcc/riscv64-linux-musl-x86_64
 
-SDK_SYSROOT_64 = $(BUILDDIR)/ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-aarch64-linux-gnu
-SDK_SYSROOT_32 = $(BUILDDIR)/ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf
+SDK_SYSROOT_64 = $(CROSS_COMPILE_PATH_64)/aarch64-none-linux-gnu/libc
+SDK_SYSROOT_32 = $(CROSS_COMPILE_PATH_32)/arm-none-linux-gnueabihf/libc
 SDK_SYSROOT_GLIBC_RISCV64 = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)/sysroot
 SDK_SYSROOT_MUSL_RISCV64 = $(CROSS_COMPILE_PATH_MUSL_RISCV64)/sysroot
 
@@ -225,10 +225,11 @@ $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h: $(BUILDDIR)/$(BOARD)-$(VARIA
 
 $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@echo "$(COLOUR_GREEN)Patching Toolchain for $(BOARD)$(END_COLOUR)"
-	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-linaro-toolchains.sh
+	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-toolchains.sh
 	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-thead-toolchains.sh
 	@if [ "$(UBOOT_ARCH)" = "arm" ]; then \
-		cd / && /builder/replace-all-linaro-toolchains.sh && \
+		rm -rf /host-tools/gcc/riscv64-*/ && \
+		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
 	else \
 		apt-get install -y gcc-riscv64-unknown-elf && \
