@@ -181,7 +181,7 @@ sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf || t
 #
 # Install extra packages
 #
-apt-get install -y htop tmux
+apt-get install -y htop tmux lm-sensors
 
 
 #
