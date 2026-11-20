@@ -180,7 +180,6 @@ EOF
 # 
 # Enable system services
 #
-systemctl enable avahi-daemon.service
 systemctl enable finalize-image.service
 
 # Update source list 
