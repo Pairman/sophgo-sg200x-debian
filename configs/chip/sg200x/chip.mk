@@ -1,5 +1,5 @@
 FSBLVERSION=1.2.0
-OSDRVVERSION=2024.10.14
+OSDRVVERSION=2025.11.03
 MIDDLEWAREVERSION=2024.10.14
 
 PACKAGES += " gpiod"
@@ -22,7 +22,7 @@ SDK_SYSROOT_GLIBC_RISCV64 = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)/sysroot
 SDK_SYSROOT_MUSL_RISCV64 = $(CROSS_COMPILE_PATH_MUSL_RISCV64)/sysroot
 
 SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53 -mno-outline-atomics
-SDK_TARGET_LDFLAGS_32 = -march=armv7-a
+SDK_TARGET_LDFLAGS_32 = -march=armv7-a+fp
 SDK_TARGET_LDFLAGS_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d
 
 ifeq ($(SDK_VER),glibc_riscv64)
@@ -49,6 +49,30 @@ else
 $(error $(red)SDK_VER is invalid$(reset))
 endif
 
+ifeq ($(SDK_TARGET_CFLAGS),)
+SDK_TARGET_CFLAGS = $(SDK_TARGET_LDFLAGS)
+SDK_TARGET_CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -O2
+ifeq ($(SDK_VER),32bit)
+SDK_TARGET_CFLAGS += -D_TIME_BITS=32
+endif
+endif
+SDK_TARGET_CXXFLAGS ?= $(SDK_TARGET_CFLAGS)
+
+SDK_MESON_LDFLAGS ?= ['$(shell echo $(SDK_TARGET_LDFLAGS) | sed "s/ /', '/g")']
+SDK_MESON_CFLAGS ?= ['$(shell echo $(SDK_TARGET_CFLAGS) -g0 | sed "s/ /', '/g")']
+SDK_MESON_CXXFLAGS ?= ['$(shell echo $(SDK_TARGET_CXXFLAGS) -g0 | sed "s/ /', '/g")']
+
+ifeq ($(SDK_VER),64bit)
+SDK_MESON_ARCH ?= aarch64
+SDK_MESON_CPU ?= cortex-a53
+else ifeq ($(SDK_VER),32bit)
+SDK_MESON_ARCH ?= arm
+SDK_MESON_CPU ?= cortex-a53
+else
+SDK_MESON_ARCH ?= $(DEB_ARCH)
+SDK_MESON_CPU ?=
+endif
+
 ifeq ($(BOOT_CPU),aarch64)
 SBL_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SBL_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
@@ -63,6 +87,19 @@ SDK_CROSS_COMPILE_KERNEL="$(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREF
 endif
 
 BOARD_EXT ?= $(BOARD)
+
+SDK_KERNEL_VERSION ?= 5.10
+
+ifeq ($(SDK_KERNEL_VERSION),5.10)
+SDK_KERNEL_BRANCH = licheervnano-merged-$(SDK_KERNEL_VERSION).y
+SDK_KERNEL_GIT_REF = 36a3f6f12d30efdab21bc6cdb0ca70d3fdb511a4
+SDK_KERNEL_PATCHES = linux
+else
+# 6.12
+SDK_KERNEL_BRANCH = sg200x-$(SDK_KERNEL_VERSION).y
+SDK_KERNEL_GIT_REF = 174a87a212f2011aab7148ded51862bd49478a3d
+SDK_KERNEL_PATCHES = linux-$(SDK_KERNEL_VERSION)
+endif
 
 KERNEL_OUTPUT_DIR = $(BUILDDIR)/kernel/build/$(BOARD)-$(VARIANT)
 
@@ -104,17 +141,17 @@ CONFIG_SENSOR_LONTIUM_LT6911=y
 BR_BOARD = $(CHIP_VENDOR)_$(SDK_CHIP)_$(SDK_VER)
 BR_DEFCONFIG = $(BR_BOARD)_defconfig
 BR_DIR = $(BUILDDIR)/buildroot
+BR_OVERLAY_DIR = $(BUILDDIR)/buildroot/board/$(CHIP_VENDOR)/$(SDK_CHIP)/overlay
 BR_OUTPUT_DIR = $(BR_DIR)/output/$(BR_BOARD)
 
 BUILDROOT_ENV = CROSS_COMPILE_KERNEL=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 CROSS_COMPILE_SDK=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
-ifeq ($(findstring maixcdk,$(IMAGE_ADDITIONS)),)
-BR_ENABLE_MAIXAPP = $(findstring maixapp,$(IMAGE_ADDITIONS))
-endif
-
 TOOLCHAIN_URL_ARM ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g' | sed 's|/linaro|/arm/gnu|g')
+ifneq ($(TOOLCHAIN_URL),)
+TOOLCHAIN_URL_GNU ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*||g' | sed 's|/linaro||g')/gnu
+endif
 
 FSBL_MAKE_OPTS = $(UBOOT_MAKE_OPTS) \
 CHIP_ARCH=$(CHIP) \
@@ -140,10 +177,6 @@ MIDDLEWARE_ENV = $(OSDRV_ENV) $(SENSOR_ENV)
 MIDDLEWARE_OUT_DIR=$(BUILDDIR)/middleware/install/system/usr
 MIDDLEWARE_TARGET_DIR=/mnt/system/usr
 
-# BSPDEPENDS = $(CHIP_VENDOR)-middleware-$(BOARD)\
-#  $(CHIP_VENDOR)-osdrv-$(BOARD)-$(VARIANT)\
-#  linux-headers-$(BOARD)-$(VARIANT)\
-#  linux-image-$(BOARD)-$(VARIANT)
 BSPDEPENDS =
 ifneq ($(strip $(ION_SIZE)),0)
 BSPDEPENDS += $(CHIP_VENDOR)-middleware-$(BOARD)
@@ -157,6 +190,17 @@ BSPFILTER =
 include $(wildcard /builder/addons/*/addon.mk)
 
 SDK_OSS_TARBALL_DIR = $(BUILDDIR)/tpusdk/oss/oss_release_tarball/$(SDK_VER)
+
+ifeq ($(findstring maixcdk,$(IMAGE_ADDITIONS)),)
+BR_ENABLE_MAIXAPP = $(findstring maixapp,$(IMAGE_ADDITIONS))
+endif
+ifneq ($(strip $(ION_SIZE)),0)
+ifneq ($(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP),)
+ifeq ($(TPU_REL),1)
+BR_DEPENDS = $(BUILDDIR)/tpusdk-stamp
+endif
+endif
+endif
 
 addon-targets = $(patsubst "%,$(BUILDDIR)/%-stamp,$(patsubst %",%,$(IMAGE_ADDITIONS)))
 _PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(PACKAGES)))
@@ -235,11 +279,13 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-toolchains.sh
 	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-thead-toolchains.sh
 	@if [ "$(UBOOT_ARCH)" = "arm" ]; then \
+		[ "$(DEB_ARCH)" != "arm64" -a "$(DEB_ARCH)" != "armhf" ] || apt-get install -y gcc-aarch64-linux-gnu && \
+		[ "$(DEB_ARCH)" != "armhf" ] || apt-get install -y gcc-arm-linux-gnueabihf && \
 		rm -rf /host-tools/gcc/riscv64-*/ && \
 		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
 	else \
-		apt-get install -y gcc-riscv64-unknown-elf && \
+		apt-get install -y gcc-riscv64-linux-gnu gcc-riscv64-unknown-elf && \
 		cd / && /builder/replace-all-thead-toolchains.sh && \
 		rm -rf /host-tools/gcc/riscv64-elf-x86_64 ; \
 		[ "$(SDK_VER)" = "glibc_riscv64" ] || rm -rf $(CROSS_COMPILE_PATH_GLIBC_RISCV64) ; \
@@ -249,20 +295,21 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-checkout-stamp:
-	@echo "$(COLOUR_GREEN)Checking out Kernel for $(BOARD)$(END_COLOUR)"
+	@echo "$(COLOUR_GREEN)Checking out Kernel $(SDK_KERNEL_VERSION) for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) $(GIT_USER_URL)/linux.git $(BUILDDIR)/kernel
-	@cd $(BUILDDIR)/kernel && git checkout 5cc993b
+	@git clone -b $(SDK_KERNEL_BRANCH) $(GIT_CLONE_OPTS) $(GIT_USER_URL)/linux.git $(BUILDDIR)/kernel
+	@cd $(BUILDDIR)/kernel && git checkout $(SDK_KERNEL_GIT_REF)
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/linux-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
-	@echo "$(COLOUR_GREEN)Patching Kernel for $(BOARD)$(END_COLOUR)"
-	@$(foreach file, $(wildcard /configs/common/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
-	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
-	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@echo "$(COLOUR_GREEN)Patching Kernel $(SDK_KERNEL_VERSION) for $(BOARD)$(END_COLOUR)"
+	@$(foreach file, $(wildcard /configs/common/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
 	@cp /configs/$(BOARD_CFG)/linux/defconfig $(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/configs/${BOARD}_defconfig
 	$(call copy_dts_action,$(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/boot/dts/$(CHIP_VENDOR))
 	@cp -p $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h $(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/boot/dts/$(CHIP_VENDOR)/cvi_board_memmap.h
+	@cp -p $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h $(BUILDDIR)/kernel/scripts/dtc/include-prefixes/
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-configure-stamp: $(BUILDDIR)/linux-prepare-patch-stamp
@@ -282,8 +329,8 @@ $(BUILDDIR)/linux-compile-stamp: $(BUILDDIR)/linux-prepare-configure-stamp
 
 $(BUILDDIR)/linux-package-stamp: $(BUILDDIR)/linux-compile-stamp
 	@echo "$(COLOUR_GREEN)Packaging linux-headers-$(CHIP_FAMILY) for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_TMP_IMAGE=$(KERNEL_OUTPUT_DIR)/debian/linux-image)
-	@$(eval KERNEL_DEB_TMP_HEADERS=$(KERNEL_OUTPUT_DIR)/debian/linux-headers)
+	@$(eval KERNEL_DEB_TMP_IMAGE=$(KERNEL_OUTPUT_DIR)/debian/linux-image*)
+	@$(eval KERNEL_DEB_TMP_HEADERS=$(KERNEL_OUTPUT_DIR)/debian/linux-headers*)
 	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@$(eval LINUXMETAVERSION=$(shell basename $(KERNEL_DEB_TMP_HEADERS)/usr/share/doc/linux-headers-* | cut -d '-' -f 3-))
 	@$(eval LINUX_HEADERS_META_DIR=$(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION))
@@ -328,7 +375,7 @@ $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) $(GIT_USER_URL)/sophgo-osdrv.git $(BUILDDIR)/osdrv
-	@cd $(BUILDDIR)/osdrv && git checkout debcc0c
+	@cd $(BUILDDIR)/osdrv && git checkout a42cddf
 	@touch $@
 
 $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/osdrv-prepare-checkout-stamp $(BUILDDIR)/linux-compile-stamp
@@ -337,6 +384,11 @@ $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp
 	@$(foreach file, $(wildcard /configs/common/patches/osdrv/*.patch), cd $(BUILDDIR)/osdrv && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/osdrv/*.patch), cd $(BUILDDIR)/osdrv && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/osdrv/*.patch), cd $(BUILDDIR)/osdrv && git apply --ignore-whitespace $(file);)
+	@if [ "X$(findstring lichee,$(BOARD))" = "Xlichee" ]; then \
+		cd $(BUILDDIR)/osdrv && \
+		sed -i 's| 25000000 // 0: default, other: target clock rate| '$(MMC_MAX_FREQUENCY)' // 0: default, other: target clock rate|g' extdrv/wireless/aic8800/aic8800_bsp/aic_bsp_driver.h ; \
+		sed -i 's| 50000000 // 0: default, other: target clock rate| '$(MMC_MAX_FREQUENCY)' // 0: default, other: target clock rate|g' extdrv/wireless/aic8800/aic8800_bsp/aic_bsp_driver.h ; \
+	fi
 	@touch $@
 
 $(BUILDDIR)/osdrv-prepare-configure-stamp: $(BUILDDIR)/osdrv-prepare-patch-stamp
@@ -350,8 +402,8 @@ $(BUILDDIR)/osdrv-compile-stamp: $(BUILDDIR)/osdrv-prepare-configure-stamp
 
 $(BUILDDIR)/osdrv-package-stamp: $(BUILDDIR)/osdrv-compile-stamp
 	@echo "$(COLOUR_GREEN)Packaging OSdrv for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_TMP_IMAGE=$(KERNEL_OUTPUT_DIR)/debian/linux-image)
-	@$(eval KERNEL_DEB_TMP_HEADERS=$(KERNEL_OUTPUT_DIR)/debian/linux-headers)
+	@$(eval KERNEL_DEB_TMP_IMAGE=$(KERNEL_OUTPUT_DIR)/debian/linux-image*)
+	@$(eval KERNEL_DEB_TMP_HEADERS=$(KERNEL_OUTPUT_DIR)/debian/linux-headers*)
 	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@$(eval KERNELRELEASE=$(shell basename $(KERNEL_DEB_TMP_HEADERS)/usr/share/doc/linux-headers-* | cut -d '-' -f 3-))
 	@$(eval OSDRV_PACKAGE_DIR=$(BUILDDIR)/package/$(CHIP_VENDOR)-osdrv-$(KERNELRELEASE)-$(OSDRVVERSION))
@@ -540,7 +592,12 @@ $(BUILDDIR)/buildroot-prepare-clone-stamp:
 	@git clone -b nanokvm-2025.02 $(GIT_CLONE_OPTS) --recursive $(GIT_USER_URL)/buildroot.git $(BUILDDIR)/buildroot
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-clone-dl-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
+$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
+	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
+	@cd $(BR_DIR) && git checkout aad0ead
+	@touch $@
+
+$(BUILDDIR)/buildroot-prepare-clone-dl-stamp: $(BUILDDIR)/buildroot-prepare-checkout-stamp
 	@echo "$(COLOUR_GREEN)Cloning Buildroot dl for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b maixcdk --depth=1 $(GIT_USER_URL)/buildroot-dl.git $(BR_DIR)/dl
@@ -552,23 +609,7 @@ $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp: $(BUILDDIR)/buildroot-prepare-c
 	@cd $(BR_DIR)/dl && [ "$(GIT_REF)" = "develop" ] || rm -rf .git
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-clone-pinmux-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
-	@echo "$(COLOUR_GREEN)Cloning Buildroot pinmux for $(BOARD)$(END_COLOUR)"
-	@mkdir -p $(BUILDDIR)/ramdisk/tools
-	@git clone -b main $(GIT_USER_URL)/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
-	@touch $@
-
-$(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp: $(BUILDDIR)/buildroot-prepare-clone-pinmux-stamp
-	@echo "$(COLOUR_GREEN)Checking out Buildroot pinmux for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/ramdisk/tools/cvi_pinmux && git checkout 5b90da9
-	@touch $@
-
-$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp
-	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout 578e9b9
-	@touch $@
-
-BUILDROOT_PREPARE_PATCH_STAMP_DEP := $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp
+BUILDROOT_PREPARE_PATCH_STAMP_DEP := $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BR_DEPENDS)
 ifneq ($(strip $(ION_SIZE)),0)
 BUILDROOT_PREPARE_PATCH_STAMP_DEP += $(BUILDDIR)/middleware-compile-stamp
 endif
@@ -598,8 +639,12 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDROOT_PREPARE_PATCH_STAMP_DEP)
 	@cd $(BR_DIR) && sed -i 's|https://github.com/wlhe|$(GIT_USER_URL)|g' package/uvc-gadget/uvc-gadget.mk
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-aarch64/toolchain-external-arm-aarch64.mk
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-arm/toolchain-external-arm-arm.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|http://www.mpfr.org|$(TOOLCHAIN_URL_GNU)|g' package/mpfr/mpfr.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|$$(BR2_KERNEL_MIRROR)/linux/kernel|$(TOOLCHAIN_URL_GNU)/linux|g' package/linux-headers/linux-headers.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|https://github.com|$(GIT_RELEASES_URL)|g' package/pkg-download.mk
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
+	@[ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || echo 'BR2_GNU_MIRROR="$(TOOLCHAIN_URL_GNU)"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@if [ "X$(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_CCACHE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_CA_CERTIFICATES/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -608,8 +653,6 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDROOT_PREPARE_PATCH_STAMP_DEP)
 		sed -i /BR2_PACKAGE_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_HOST_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_MAIX_CDK/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
-		sed -i /BR2_PACKAGE_JPEG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
-		sed -i /BR2_PACKAGE_LIBQRENCODE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
 	@if [ "X$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_PACKAGE_MPG123/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -618,6 +661,8 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDROOT_PREPARE_PATCH_STAMP_DEP)
 		sed -i /BR2_PACKAGE_WATCHDOG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_OPENCV4/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_FFMPEG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+		sed -i /BR2_PACKAGE_JPEG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+		sed -i /BR2_PACKAGE_LIBQRENCODE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	else \
 		sed -i /BR2_PACKAGE_MAIX_CDK_ALL_DEPENDENCIES/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_MAIX_CDK_ALL_PROJECTS/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -626,10 +671,16 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDROOT_PREPARE_PATCH_STAMP_DEP)
 	@if [ "X$(findstring kvm,$(VARIANT))" = "X" ]; then \
 		sed -i /BR2_PACKAGE_NANOKVM/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
-	@if [ "$(BOARD)" = "duos" ]; then \
-		sed -i s/'BR2_PACKAGE_DUO_PINMUX_DUO256M=y'/'BR2_PACKAGE_DUO_PINMUX_DUOS=y'/g $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+	@if [ "X$(findstring tpusdk,$(BR_DEPENDS))" != "X" ]; then \
+		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/lib && \
+		cp -arf $(TPUSDK_INSTALL_DIR)/rootfs/mnt/system/lib/* $(BR_OVERLAY_DIR)/mnt/system/lib/ && \
+		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/include && \
+		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/lib && \
+		cp -arf $(TPUSDK_INSTALL_DIR)/tpu_$(SDK_VER)/cvitek_tpu_sdk/include/* $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/include/ && \
+		cp -arf $(TPUSDK_INSTALL_DIR)/tpu_$(SDK_VER)/cvitek_tpu_sdk/lib/* $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/lib/ && \
+		sed -i s/'# BR2_PACKAGE_SOPHGO_LIBRARY is not set'/'BR2_PACKAGE_SOPHGO_LIBRARY=y\nBR2_PACKAGE_SOPHGO_LIBRARY_SG200X=y'/g $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
-	@mkdir -pv $(BUILDDIR)/buildroot/board/$(CHIP_VENDOR)/$(SDK_CHIP)/overlay/usr/share/fw_vcodec
+	@mkdir -pv $(BR_OVERLAY_DIR)/usr/share/fw_vcodec
 	@mkdir -pv $(BUILDDIR)/ramdisk/tools/cvi_pinmux
 	@touch $@
 
@@ -665,7 +716,7 @@ $(BUILDDIR)/uboot-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out U-Boot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) $(GIT_USER_URL)/u-boot $(BUILDDIR)/u-boot
-	@cd $(BUILDDIR)/u-boot && git checkout 23740b0
+	@cd $(BUILDDIR)/u-boot && git checkout b9ac636
 	@touch $@
 
 $(BUILDDIR)/uboot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/uboot-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
@@ -851,9 +902,8 @@ $(BUILDDIR)/image-prepare-stamp:
 	@-rm $(addon-targets)
 	@mkdir -p /rootfs/
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY) || true
-# 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
-	@curl -v -L $(USER_DEB_URL)/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
+	@curl -v -L $(USER_DEB_URL)/pairman-packages.asc -o $(BUILDDIR)/public-key.asc
 	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES) $(_DEV_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_DEB_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
 	@touch $@
 
@@ -871,7 +921,6 @@ $(BUILDDIR)/image-configure-stamp: $(BUILDDIR)/image-prepare-stamp $(BUILDDIR)/l
 	@umount /rootfs/dev || true
 	@touch $@
 
-# $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-configure-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
 IMAGE_ADDONS_STAMP_DEP := $(BUILDDIR)/image-configure-stamp $(BUILDDIR)/osdrv-package-stamp
 ifneq ($(strip $(ION_SIZE)),0)
 IMAGE_ADDONS_STAMP_DEP += $(BUILDDIR)/middleware-package-stamp
@@ -904,7 +953,6 @@ $(BUILDDIR)/image-addons-stamp: $(IMAGE_ADDONS_STAMP_DEP)
 	@echo "$(COLOUR_GREEN)Copying Deb files for installation on $(BOARD)$(END_COLOUR)"
 	@cp /output/$(CHIP_VENDOR)-fsbl-$(BOARD_EXT)_*.deb /rootfs/tmp/install/
 	@cp /output/$(CHIP_VENDOR)-osdrv-*$(BOARD)*.deb /rootfs/tmp/install/
-# 	@cp /output/$(CHIP_VENDOR)-middleware-$(BOARD)_*.deb /rootfs/tmp/install/
 	@if [ "$(ION_SIZE)" != "0" ]; then \
 		cp /output/$(CHIP_VENDOR)-middleware-$(BOARD)_*.deb /rootfs/tmp/install/; \
 	fi
@@ -923,8 +971,6 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 	@echo $(CHIP_VENDOR) > /rootfs/tmp/install/chip_vendor
 	@echo $(VARIANT) > /rootfs/tmp/install/variant
 	@echo $(STORAGE_TYPE) > /rootfs/tmp/install/storage
-# 	@echo "deb $(DEB_URL) $(DEB_DISTRO) $(DEB_COMPONENTS_FULL)" > /rootfs/tmp/install/deb_sources
-# 	@echo "deb $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)" > /rootfs/tmp/install/deb_user_sources
 	@printf '%s\n' \
 		'Types: deb' \
 		'URIs: $(DEB_URL)' \
@@ -1049,6 +1095,10 @@ $(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp $(BUILDDIR)/i
 	@rm -rf /tmp/genimage/
 	@if [ "$(STORAGE_TYPE)" = "emmc" ]; then \
 		python3 /builder/python/raw2cimg.py -v $(BUILDDIR)/images/sdcard.img $(BUILDDIR)/images /configs/$(BOARD_CFG)/partition_emmc.xml; \
+		if [ "$$(head -c 4 $(BUILDDIR)/images/sdcard.img)" != "CIMG" ] ; then \
+			echo "Failed to create CIMG!" ; \
+			exit 1 ; \
+		fi ; \
 		mkdir -p /tmp/rom/; \
 		cp $(BUILDDIR)/images/sdcard.img /tmp/rom/; \
 		cp /configs/$(BOARD_CFG)/partition_emmc.xml /tmp/rom/; \

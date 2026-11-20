@@ -8,12 +8,17 @@ CROSS_COMPILE_32 = arm-none-linux-gnueabihf-
 CROSS_COMPILE_PATH_64 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-aarch64-none-linux-gnu
 CROSS_COMPILE_PATH_32 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-linux-gnueabihf
 
+SDK_SYSROOT_64 = $(CROSS_COMPILE_PATH_64)/aarch64-none-linux-gnu/libc
+SDK_SYSROOT_32 = $(CROSS_COMPILE_PATH_32)/arm-none-linux-gnueabihf/libc
+
 ifeq ($(SDK_VER),64bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
+SDK_SYSROOT = $(SDK_SYSROOT_64)
 else ifeq ($(SDK_VER),32bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_32)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_32)
+SDK_SYSROOT = $(SDK_SYSROOT_32)
 else
 $(error $(red)SDK_VER is invalid$(reset))
 endif
@@ -436,18 +441,18 @@ define firmware_package_action
 	@$(eval FIRMWARE_PACKAGE_DIR=$(BUILDDIR)/package/$(FIRMWARE_PACKAGE_NAME)-$(FIRMWAREVERSION))
 	@$(eval PANEL_NAME_FIRMWARE=$(shell echo '${2}' | cut -d '-' -f 2- | tr '-' '_'))
 	@mkdir -p $(FIRMWARE_PACKAGE_DIR)
-	@cp -r /builder/deb/cvitek-fsbl/* $(FIRMWARE_PACKAGE_DIR)/
+	@cp -r /builder/deb/axera-firmware/* $(FIRMWARE_PACKAGE_DIR)/
 	@mkdir -p $(FIRMWARE_PACKAGE_DIR)/usr/lib/$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}/
 	@cp $(BSP_INSTALL_DIR)/uboot.bin $(FIRMWARE_PACKAGE_DIR)/usr/lib/$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}/u-boot_signed.bin
 	@cp $(BSP_INSTALL_DIR)/dtb.img $(FIRMWARE_PACKAGE_DIR)/usr/lib/$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}/fdt_signed.dtb
 	@cp $(BSP_INSTALL_DIR)/kernel.img $(FIRMWARE_PACKAGE_DIR)/usr/lib/$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}/boot_signed.bin
-	@sed -i 's|cvitek-fsbl/licheervnano|$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}|g' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
-	@[ "X$(PANEL_NAME_FIRMWARE)" = "X" ] || sed -i s/'^panel='/'panel='$(PANEL_NAME_FIRMWARE)/g $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
+	@sed -i 's|axera-firmware/maixcam2|$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}|g' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
+	@[ "X$(findstring kvm,$(VARIANT))" = "X" ] || sed -i s/'^panel=.*'/'panel='jd9853/g $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
+	@[ "X$(PANEL_NAME_FIRMWARE)" = "X" ] || sed -i s/'^panel=.*'/'panel='$(PANEL_NAME_FIRMWARE)/g $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
 	@chmod ugo+rx $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
-	@rm -f $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
-	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Architecture: arm64/Architecture: $(DEB_ARCH)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.1.0/Version: $(FIRMWAREVERSION)$(FV)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
-	@sed -i 's/Package: cvitek-fsbl/Package: $(FIRMWARE_PACKAGE_NAME)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: axera-firmware/Package: $(FIRMWARE_PACKAGE_NAME)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
 	@if [ "$(BOARD)" = "$(BOARD_EXT)" ]; then \
 		sed -i '/Provides: .*/d' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control && \
 		sed -i '/Replaces: .*/d' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control ; \
@@ -473,7 +478,7 @@ $(BUILDDIR)/bsp-prepare-clone-stamp:
 
 $(BUILDDIR)/bsp-prepare-checkout-stamp: $(BUILDDIR)/bsp-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out BSP for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/bsp && git checkout 8222716
+	@cd $(BUILDDIR)/bsp && git checkout 1a76842
 	@cd $(BUILDDIR)/bsp && git submodule set-url axerabin $(GIT_USER_URL)/axerabin
 	@cd $(BUILDDIR)/bsp && git submodule set-url linux $(GIT_USER_URL)/linux
 	@cd $(BUILDDIR)/bsp && git submodule set-url u-boot $(GIT_USER_URL)/u-boot

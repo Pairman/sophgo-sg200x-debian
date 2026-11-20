@@ -7,6 +7,11 @@
 / {
 	model = "Milk-V Duo256M";
 
+	aliases {
+		mmc0 = &sd;
+		mmc1 = &wifisd;
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -19,6 +24,7 @@
 
 &mipi_rx {
 	snsr-reset = <&portc 17 GPIO_ACTIVE_LOW>, <&portc 17 GPIO_ACTIVE_LOW>, <&portc 17 GPIO_ACTIVE_LOW>;
+	snsr-reset-gpios = <&portc 17 GPIO_ACTIVE_LOW>, <&portc 17 GPIO_ACTIVE_LOW>, <&portc 17 GPIO_ACTIVE_LOW>;
 };
 
 &i2c0 {
