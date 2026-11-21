@@ -184,6 +184,16 @@ EOF
 #
 sed -i 's/managed=.*/managed=true/' /etc/NetworkManager/NetworkManager.conf || true
 
+# Keep DNS handling in NetworkManager and use its dnsmasq backend for a
+# small local cache.  NetworkManager will pass the DNS servers learned from
+# DHCP to its per-connection dnsmasq instance and update /etc/resolv.conf;
+# systemd-resolved is intentionally not used on SG200x.
+mkdir -p /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/10-dnsmasq.conf <<'EONM'
+[main]
+dns=dnsmasq
+EONM
+
 
 #
 # Install extra packages
