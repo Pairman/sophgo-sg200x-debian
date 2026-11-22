@@ -26,8 +26,15 @@
 
 &sd {
         min-frequency = <400000>; // 400Khz
-        max-frequency = <50000000>; // 50Mhz
-        //max-frequency = <25000000>; // 25Mhz
+        /*
+         * Keep the removable rootfs card at a conservative SD25 rate.
+         * The board has been observed to report ADMA errors during CMD25
+         * multi-block writes at the previous 50 MHz/UHS configuration; a
+         * stalled rootfs makes SSH and Tailscale disappear together.
+         */
+        max-frequency = <25000000>; // 25Mhz
+        /delete-property/ sd-uhs-sdr50;
+        /delete-property/ sd-uhs-sdr104;
         //max-frequency = <10000000>; // 10Mhz
         //max-frequency = <5000000>; // 5Mhz
 };
