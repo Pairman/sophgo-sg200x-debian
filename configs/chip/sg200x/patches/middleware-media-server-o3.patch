@@ -1,0 +1,13 @@
+diff --git a/gcc.mk b/gcc.mk
+index b187f1d..5328fe6 100644
+--- a/gcc.mk
++++ b/gcc.mk
+@@ -109,7 +109,7 @@ endif
+ 
+ $(OBJSPATH)/%.o : %.c
+ 	$(MKDIR)
+-	@$(COMPILE.CC) -c -o $@ $<
++	@$(COMPILE.CC) $(if $(filter libmov,$(notdir $(CURDIR))),-O3,$(if $(filter mpeg4-annexbtomp4.c,$(notdir $<)),-O3,)) -c -o $@ $<
+ 	@echo -e "\033[35m	CC	$(notdir $@)\033[0m"
+ 	
+ $(OBJSPATH)/%.o : %.cpp

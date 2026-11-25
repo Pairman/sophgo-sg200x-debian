@@ -1,0 +1,13 @@
+diff --git a/modules/isp/cv181x/isp/Makefile b/modules/isp/cv181x/isp/Makefile
+index e9fdd99..50d2026 100644
+--- a/modules/isp/cv181x/isp/Makefile
++++ b/modules/isp/cv181x/isp/Makefile
+@@ -96,7 +96,7 @@ all: update_isp_version $(TARGET_A) $(TARGET_SO)
+ endif
+ 
+ $(TMP_FOLDER)/%.o: $(SDIR)/%.c | $(TMP_FOLDER)
+-	@$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -c $< -o $@
++	@$(CC) $(CFLAGS) $(LOCAL_CFLAGS) $(if $(filter isp_sts_ctrl.c isp_interpolate.c isp_%_ctrl.c,$(notdir $<)),-O3,) -c $< -o $@
+ 	@echo [$(notdir $(CC))] $(notdir $@)
+ 
+ $(TARGET_A): $(OBJS)
