@@ -1,4 +1,5 @@
 CHIP=cv181x
+KERNELREV=8
 UBOOT_CHIP=cv181x
 UBOOT_BOARD=licheervnano_sd
 BOOT_CPU=riscv
